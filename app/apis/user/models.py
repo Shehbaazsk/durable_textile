@@ -17,8 +17,11 @@ class User(CommonModel):
     gender = Column(Enum("M", "F"))
     profile_image_id = Column(BigInteger(),
                               ForeignKey('document_master.document_id'))
+    
+    #relationships
     profile_image = relationship("DocumentMaster",
                                  foreign_keys=[profile_image_id], backref="user_profile_image", uselist=False)
+    roles = relationship("Roles",secondary="user_roles",backref="users")
 
     @property
     def password(self):

@@ -1,14 +1,47 @@
-from fastapi import APIRouter, Depends, status,UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, status, UploadFile
+from fastapi.security import OAuth2PasswordBearer
+from pydantic import EmailStr
 from sqlalchemy.orm import Session
-from app.apis.user.schema import UserCreateRequest
+from app.apis.user.schema import GenderEnum, Token, UserCreateRequest, UserLoginRequest
 from app.apis.user.service import UserService
 from app.config.database import get_session
+from app.utils.utility import authenticate_user
+
+
 
 
 user_router = APIRouter(prefix="/users", tags=['Users'])
 
 
+@user_router.post('/signup', status_code=status.HTTP_201_CREATED)
+def create_user(first_name: str = Form(..., examples=["John"]),
+                last_name: str = Form(..., examples=["Doe"]),
+                email: EmailStr = Form(..., examples=["john@example.com"]),
+                password: str = Form(..., min_length=8, max_length=20,
+                                     description="user password"),
+                mobile_no: str | None = Form(min_length=10,
+                                             max_length=10, examples=['1234567890']),
+                gender: GenderEnum = Form(..., description="Gender must be 'M' or 'F'",
+                                          examples=["M", "F"]),
+                profile_image: UploadFile | None = None, 
+                session: Session = Depends(get_session)):
+    
+    """Create User endpoint
 
-@user_router.post('/', status_code=status.HTTP_201_CREATED)
-def create_user(data: UserCreateRequest, profile_image:UploadFile=None,session: Session = Depends(get_session)):
-    return UserService.create_user(data,profile_image,session)
+    Returns:
+        tuple[dict,int]: A dict with msg and a status_code
+    """
+
+    return UserService.create_user(first_name, last_name, email, password, mobile_no, gender, profile_image, session)
+
+
+@user_router.post('/login',response_model=Token,status_code=status.HTTP_200_OK)
+def login_user(data:UserLoginRequest,session:Session=Depends(get_session)):
+    """Login User Endpoint
+
+    Returns:
+        dict: A dict containing access_token,refresh_token and token type
+    """
+    
+    return UserService.login_user(session,data)
+     
