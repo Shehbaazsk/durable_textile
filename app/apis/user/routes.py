@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, File, Form, HTTPException, status, UploadFile
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import APIRouter, Depends,  Form, status, UploadFile
+from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
-from app.apis.user.schema import GenderEnum, Token, UserCreateRequest, UserLoginRequest
+from app.apis.user.schema import GenderEnum, RoleEnum, Token, UserLoginRequest
 from app.apis.user.service import UserService
 from app.config.database import get_session
-from app.utils.utility import authenticate_user
+from app.utils.utility import has_role
 
 
 
@@ -13,7 +13,7 @@ from app.utils.utility import authenticate_user
 user_router = APIRouter(prefix="/users", tags=['Users'])
 
 
-@user_router.post('/signup', status_code=status.HTTP_201_CREATED)
+@user_router.post('/signup', status_code=status.HTTP_201_CREATED,dependencies=[Depends(has_role('ADMIN'))])
 def create_user(first_name: str = Form(..., examples=["John"]),
                 last_name: str = Form(..., examples=["Doe"]),
                 email: EmailStr = Form(..., examples=["john@example.com"]),
@@ -24,6 +24,7 @@ def create_user(first_name: str = Form(..., examples=["John"]),
                 gender: GenderEnum = Form(..., description="Gender must be 'M' or 'F'",
                                           examples=["M", "F"]),
                 profile_image: UploadFile | None = None, 
+                role : RoleEnum = Form(...,description="role of the user"),
                 session: Session = Depends(get_session)):
     
     """Create User endpoint
@@ -32,16 +33,16 @@ def create_user(first_name: str = Form(..., examples=["John"]),
         tuple[dict,int]: A dict with msg and a status_code
     """
 
-    return UserService.create_user(first_name, last_name, email, password, mobile_no, gender, profile_image, session)
+    return UserService.create_user(first_name, last_name, email, password, mobile_no, gender, profile_image,role, session)
 
 
-@user_router.post('/login',response_model=Token,status_code=status.HTTP_200_OK)
-def login_user(data:UserLoginRequest,session:Session=Depends(get_session)):
+@user_router.post('/login',status_code=status.HTTP_200_OK)
+def login_user(form_data:OAuth2PasswordRequestForm=Depends(),session:Session=Depends(get_session)):
     """Login User Endpoint
 
     Returns:
         dict: A dict containing access_token,refresh_token and token type
     """
     
-    return UserService.login_user(session,data)
+    return UserService.login_user(session,form_data)
      

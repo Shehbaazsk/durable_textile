@@ -1,7 +1,8 @@
 from typing import Optional
-from sqlalchemy import BigInteger, Column, Enum, ForeignKey, String
+from sqlalchemy import BigInteger, Column, Enum, ForeignKey, String, Table
 from sqlalchemy.orm import relationship
 from app.apis.utils.models import CommonModel, DocumentMaster
+from app.config.database import Base
 from app.config.security import hash_password
 
 
@@ -21,7 +22,7 @@ class User(CommonModel):
     #relationships
     profile_image = relationship("DocumentMaster",
                                  foreign_keys=[profile_image_id], backref="user_profile_image", uselist=False)
-    roles = relationship("Roles",secondary="user_roles",backref="users")
+    roles = relationship("Role",secondary="user_roles",backref="users")
 
     @property
     def password(self):
@@ -43,8 +44,9 @@ class Role(CommonModel):
     description = Column(String(255))
 
 
-class UserRole(CommonModel):
-    __tablename__ = 'user_roles'
 
-    user_id = Column(BigInteger, ForeignKey('users.id'), primary_key=True)
-    role_id = Column(BigInteger, ForeignKey('roles.id'), primary_key=True)
+user_roles = Table(
+    'user_roles', Base.metadata,
+    Column('user_id', BigInteger, ForeignKey('users.id'), primary_key=True),
+    Column('role_id', BigInteger, ForeignKey('roles.id'), primary_key=True)
+)

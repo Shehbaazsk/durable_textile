@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     DATABASE_URI: str = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASS}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}"
 
     # DOCUMENT_CONFIGURATION
-    UPLOAD_FOLDER: str = os.environ.get("UPLOAD_FOLDER", "/uploads")
+    UPLOAD_FOLDER: str = os.environ.get("UPLOAD_FOLDER", "./uploads")
 
     #LOGGER_CONFIGURATION
     lOGGER_NAME : str = os.environ.get("LOGGER_NAME",'fastapi')
@@ -29,7 +29,7 @@ class Settings(BaseSettings):
         "JWT_SECRET", "649fb93ef34e4fdf4187709c84d643dd61ce730d91856418fdcf563f895ea40f")
     JWT_ALGORITHM: str = os.environ.get("ACCESS_TOKEN_ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(
-        os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+        os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", 60*24*7))
     REFRESH_TOKEN_EXPIRE_MINUTES: int = int(
         os.environ.get("REFRESH_TOKEN_EXPIRE_MINUTES", 60*24*7))
 

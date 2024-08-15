@@ -5,6 +5,7 @@ import shutil
 from fastapi import Depends, HTTPException, UploadFile,status
 from werkzeug.utils import secure_filename
 from app.apis.user.models import Role, User
+from app.apis.user.schema import TokenData
 from app.apis.utils.models import DocumentMaster
 from app.config.database import get_session
 from app.config.setting import get_settings
@@ -14,7 +15,7 @@ from app.config.security import decode_token, oauth2_scheme, verify_password
 
 setting = get_settings()
 
-def save_file(upload_file: UploadFile, folder_name: str, entity_type: str) -> int:
+def save_file(upload_file: UploadFile, folder_name: str, entity_type: str,session:Session) -> int:
     """Save File to Server
 
     Args:
@@ -52,12 +53,13 @@ def save_file(upload_file: UploadFile, folder_name: str, entity_type: str) -> in
             actual_path=file_path  
         )
 
-        with get_session() as session:
-            session.add(document)
-            session.commit()
-            logger.info(f"Document saved to database with ID: {document.id}")
         
-        return document.id
+        session.add(document)
+        session.commit()
+        session.refresh(document,attribute_names=["document_id"])
+        logger.info(f"Document saved to database with ID: {document.document_id}")
+        
+        return document.document_id
 
     except Exception as e:
         logger.error(f"Error saving file: {e}", exc_info=True)
@@ -68,7 +70,7 @@ def authenticate_user(session: Session, email: str, password: str):
     user = session.query(User).filter(User.email == email).first()
     if not user:
         return False
-    if not verify_password(password, user.hashed_password):
+    if not verify_password(password, user._password):
         return False
     return user
 
@@ -83,36 +85,13 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         )
     return token_data
 
-# def role_required(allowed_roles: list):
-    # def decorator(func):
-    #     @wraps(func)
-    #     async def wrapper(*args, db: Session = Depends(get_db), current_user: User = Depends(get_current_user), **kwargs):
-    #         user_roles = [role.name for role in current_user.roles]
-    #         if not any(role in allowed_roles for role in user_roles):
-    #             raise HTTPException(
-    #                 status_code=status.HTTP_403_FORBIDDEN,
-    #                 detail="You do not have permission to access this resource"
-    #             )
-    #         return await func(*args, db=db, current_user=current_user, **kwargs)
-    #     return wrapper
-    # return decorator
-
-
-# Dependency to get the current user (simulate authentication here)
-# def get_current_user( user_id: int,db: Session = Depends(get_session)) -> User:
-#     with get_session as session:
-#         user = db.query(User).filter(User.id == user_id).first()
-#     if user is None:
-#         raise HTTPException(status_code=401, detail="User not found")
-#     return user
-
-
-# # Dependency to check if the user has a specific role
-# def has_role(required_role: str):
-#     def role_checker(db: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
-#         # Fetch the role object from the database
-#         role = db.query(Role).filter(Role.name == required_role).first()
-#         if role not in current_user.roles:
-#             raise HTTPException(status_code=403, detail="Not authorized")
-#         return current_user
-#     return role_checker
+# Dependency to check if the user has a specific role
+def has_role(required_role: str):
+    def role_checker(db: Session = Depends(get_session), current_user: TokenData = Depends(get_current_user)):
+        # Fetch the role object from the database
+        role = db.query(Role).filter(Role.name == required_role).first()
+        user = db.query(User).filter(User.email==current_user.email).first()
+        if role not in user.roles:
+            raise HTTPException(status_code=404, detail="Role not found")
+        return current_user
+    return role_checker
