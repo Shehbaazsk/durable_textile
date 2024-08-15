@@ -37,3 +37,6 @@ class Token(BaseRequest):
 
 class TokenData(BaseRequest):
     email: EmailStr | None = None
+
+class RefreshTokenRequest(BaseRequest):
+    refresh_token: str

@@ -46,10 +46,13 @@ def decode_token(token: str):
         payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
-            return None
+            raise jwt.PyJWTError
         return TokenData(email=email)
-    except jwt.PyJWTError as e:
-        return {"error":e},500
+    except Exception as e:
+        raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=str(e)
+    )
 
 
 def get_current_user(db: Session = Depends(get_session), token: str = Depends(oauth2_scheme)):

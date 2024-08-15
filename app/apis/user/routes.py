@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends,  Form, status, UploadFile
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
-from app.apis.user.schema import GenderEnum, RoleEnum, Token, UserLoginRequest
+from app.apis.user.schema import GenderEnum, RefreshTokenRequest, RoleEnum, Token, UserLoginRequest
 from app.apis.user.service import UserService
 from app.config.database import get_session
 from app.utils.utility import has_role
@@ -46,3 +46,12 @@ def login_user(form_data:OAuth2PasswordRequestForm=Depends(),session:Session=Dep
     
     return UserService.login_user(session,form_data)
      
+@user_router.post('/refresh-token',status_code=status.HTTP_200_OK)
+def refresh_token(refresh_token:RefreshTokenRequest,session:Session=Depends(get_session)):
+    """Generate new token and refresh token
+
+    Returns:
+        dict: A dict containing access_token,refresh_token and token type
+    """
+
+    return UserService.refresh_token(refresh_token,session)

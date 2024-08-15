@@ -2,12 +2,13 @@ from datetime import timedelta
 from fastapi import HTTPException, UploadFile,status
 from fastapi.security import OAuth2PasswordRequestForm
 from app.apis.user.models import Role, User
-from app.apis.user.schema import UserCreateRequest, UserLoginRequest
+from app.apis.user.schema import RefreshTokenRequest, UserCreateRequest, UserLoginRequest
 from app.config import setting
 from sqlalchemy.orm import Session
+from jwt.exceptions import PyJWTError
 
 
-from app.config.security import create_access_token, create_refresh_token
+from app.config.security import create_access_token, create_refresh_token, decode_token
 from app.utils.utility import authenticate_user, save_file
 
 settings = setting.get_settings()
@@ -56,4 +57,33 @@ class UserService:
                     "refresh_token": refresh_token,
                     "token_type": "bearer"}
         except Exception as e:
-            return {"error":str(e)},500
+            raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=str(e)
+                )
+        
+    def refresh_token(refresh_token:RefreshTokenRequest,session:Session):
+        try:
+            payload = decode_token(refresh_token.refresh_token)
+            user_email = payload.email
+            if user_email is None:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid Token"
+                )
+        except Exception as e:
+            raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=str(e)
+                )
+
+        # Generate new access and refresh tokens
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(data={"sub": user_email}, expires_delta=access_token_expires)
+        refresh_token_expires = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
+        refresh_token = create_refresh_token(data={"sub": user_email}, expires_delta=refresh_token_expires)
+
+
+        return {"access_token": access_token,
+                "refresh_token": refresh_token,
+                    "token_type": "bearer"}
