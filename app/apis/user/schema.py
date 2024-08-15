@@ -8,6 +8,7 @@ class GenderEnum(str, Enum):
     MALE = 'M'
     FEMALE = 'F'
 
+
 class RoleEnum(str, Enum):
     ADMIN = 'ADMIN'
     STAFF = 'STAFF'
@@ -23,20 +24,28 @@ class UserCreateRequest(BaseRequest):
                                   max_length=10, examples=['1234567890'])
     gender: GenderEnum = Field(..., description="Gender must be 'M' or 'F'",
                                examples=["M", "F"])
-    role : RoleEnum = Field(...,description="Role of user")
+    role: RoleEnum = Field(..., description="Role of user")
 
 
 class UserLoginRequest(BaseRequest):
-    email : str 
-    password : str
+    email: str
+    password: str
+
 
 class Token(BaseRequest):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
 
+
 class TokenData(BaseRequest):
     email: EmailStr | None = None
 
+
 class RefreshTokenRequest(BaseRequest):
     refresh_token: str
+
+
+class ChangePasswordRequest(BaseRequest):
+    old_password: str
+    new_password: str
