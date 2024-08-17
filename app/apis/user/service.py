@@ -1,16 +1,17 @@
 from datetime import timedelta
-from fastapi import HTTPException, UploadFile, status
+from fastapi import BackgroundTasks, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import exists
 from app.apis.user.models import Role, User
-from app.apis.user.schema import ChangePasswordRequest, RefreshTokenRequest, UserCreateRequest, UserLoginRequest
+from app.apis.user.schema import ChangePasswordRequest, ForgetPasswordRequest, RefreshTokenRequest, UserCreateRequest, UserLoginRequest
 from app.config import setting
 from sqlalchemy.orm import Session
 from jwt.exceptions import PyJWTError
 
 
 from app.config.security import create_access_token, create_refresh_token, decode_token, verify_password
+from app.utils.email_utility import EmailRequest, render_template, send_email
 from app.utils.utility import authenticate_user, save_file
 
 settings = setting.get_settings()
@@ -124,6 +125,31 @@ class UserService:
             session.add(current_user)
             session.commit()
             return JSONResponse({"message": "Password change successfully"})
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=str(e)
+            )
+
+    async def forget_password(data: ForgetPasswordRequest, background_task: BackgroundTasks, session: Session):
+        try:
+            user = session.query(User.email, User.first_name).filter(User.email == data.email, User.is_delete == False,
+                                                                     User.is_active == True).first()
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="User not found"
+                )
+            token = create_access_token(
+                data={"sub": user.email}, expires_delta=timedelta(minutes=5))
+            reset_link = f"http:localhost:8000/api/user/reset-password?token={
+                token}"
+            email_request_data = EmailRequest(subject="Forget Password", template_body={"name": user.first_name, "reset_link": reset_link},
+                                              to_email=user.email, template_name="forgot_password_template.html", is_html=True)
+
+            background_task.add_task(send_email, email_request_data)
+
+            return JSONResponse({"message": "Email with reset link sent successfully"})
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

@@ -49,3 +49,7 @@ class RefreshTokenRequest(BaseRequest):
 class ChangePasswordRequest(BaseRequest):
     old_password: str
     new_password: str
+
+
+class ForgetPasswordRequest(BaseRequest):
+    email: EmailStr
