@@ -3,6 +3,7 @@ import uuid
 
 from sqlalchemy import CHAR, BigInteger, Boolean, Column, DateTime, String
 from app.config.database import Base
+from app.utils.utility import get_current_indian_time
 
 
 class CommonModel(Base):
@@ -12,9 +13,9 @@ class CommonModel(Base):
     uuid = Column(CHAR(36), default=lambda: str(uuid.uuid4()),
                   unique=True, index=True, nullable=False)
 
-    created_at = Column(DateTime, default=datetime.now)
+    created_at = Column(DateTime, default=get_current_indian_time)
     modified_at = Column(DateTime,
-                         default=datetime.now, onupdate=datetime.now)
+                         default=get_current_indian_time, onupdate=get_current_indian_time)
     is_active = Column(Boolean, default=True)
     is_delete = Column(Boolean, default=False)
 

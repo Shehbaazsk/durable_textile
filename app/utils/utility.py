@@ -1,19 +1,36 @@
 
+from datetime import datetime
+import pytz
 from functools import wraps
 import os
 import shutil
 from fastapi import Depends, HTTPException, UploadFile, status
 from werkzeug.utils import secure_filename
-from app.apis.user.models import Role, User
 from app.apis.user.schema import TokenData
-from app.apis.utils.models import DocumentMaster
 from app.config.database import get_session
 from app.config.setting import get_settings
 from app.config.logger_config import logger
 from sqlalchemy.orm import Session
-from app.config.security import decode_token, get_current_user, oauth2_scheme, verify_password
+from app.config.security import decode_token, get_current_user, verify_password
 
 setting = get_settings()
+
+
+# Define the Indian timezone
+INDIAN_TZ = pytz.timezone('Asia/Kolkata')
+
+
+def get_current_indian_time() -> datetime:
+    """Get the current time in Indian timezone."""
+    return datetime.now(INDIAN_TZ)
+
+
+def convert_to_indian_timezone(dt: datetime) -> datetime:
+    """Convert a given datetime to Indian timezone."""
+    if dt.tzinfo is None:
+        # Localize naive datetime to Indian timezone
+        return INDIAN_TZ.localize(dt)
+    return dt.astimezone(INDIAN_TZ)
 
 
 def save_file(upload_file: UploadFile, folder_name: str, entity_type: str, session: Session) -> int:
@@ -29,6 +46,7 @@ def save_file(upload_file: UploadFile, folder_name: str, entity_type: str, sessi
     """
 
     try:
+        from app.apis.utils.models import DocumentMaster
         logger.info(f"Attempting to save file: {upload_file.filename}, folder: {
                     folder_name}, entity_type: {entity_type}")
 
@@ -69,6 +87,7 @@ def save_file(upload_file: UploadFile, folder_name: str, entity_type: str, sessi
 
 
 def authenticate_user(session: Session, email: str, password: str):
+    from app.apis.user.models import User
     user = session.query(User).filter(User.email == email).first()
     if not user:
         return False
@@ -78,8 +97,10 @@ def authenticate_user(session: Session, email: str, password: str):
 
 
 def has_role(required_role: str):
+    from app.apis.user.models import Role, User
+
     def role_checker(db: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
-        # Fetch the role object from the database
+
         role = db.query(Role).filter(Role.name == required_role).first()
         if role not in current_user.roles:
             raise HTTPException(status_code=404, detail="Role not found")

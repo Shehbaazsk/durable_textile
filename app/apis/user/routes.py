@@ -2,12 +2,12 @@ from fastapi import APIRouter, BackgroundTasks, Depends,  Form, status, UploadFi
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
-from app.apis.user.models import User
-from app.apis.user.schema import ChangePasswordRequest, ForgetPasswordRequest, GenderEnum, RefreshTokenRequest, ResetPasswordRequest, RoleEnum, Token, UserLoginRequest
+from app.apis.user.schema import ChangePasswordRequest, ForgetPasswordRequest, GenderEnum, RefreshTokenRequest, ResetPasswordRequest, RoleEnum
 from app.apis.user.service import UserService
 from app.config.database import get_session
 from app.config.security import get_current_user
 from app.utils.utility import has_role
+from .models import User
 
 
 user_router = APIRouter(prefix="/users", tags=['Users'])

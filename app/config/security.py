@@ -10,6 +10,7 @@ from app.apis.user.schema import TokenData
 from app.config.database import get_session
 from app.config.setting import get_settings
 from passlib.context import CryptContext
+import pytz
 
 settings = get_settings()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/users/login")
@@ -29,8 +30,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    from app.utils.utility import get_current_indian_time
     to_encode = data.copy()
-    expire = datetime.now() + (expires_delta if expires_delta else timedelta(
+    expire = get_current_indian_time() + (expires_delta if expires_delta else timedelta(
         minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
@@ -39,8 +41,9 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 
 def create_refresh_token(data: dict, expires_delta: timedelta | None = None):
+    from app.utils.utility import get_current_indian_time
     to_encode = data.copy()
-    expire = datetime.now() + (expires_delta if expires_delta else timedelta(
+    expire = get_current_indian_time() + (expires_delta if expires_delta else timedelta(
         minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
