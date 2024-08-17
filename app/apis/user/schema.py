@@ -53,3 +53,7 @@ class ChangePasswordRequest(BaseRequest):
 
 class ForgetPasswordRequest(BaseRequest):
     email: EmailStr
+
+
+class ResetPasswordRequest(BaseRequest):
+    new_password: str

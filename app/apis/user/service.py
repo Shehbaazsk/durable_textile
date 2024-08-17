@@ -4,14 +4,14 @@ from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import exists
 from app.apis.user.models import Role, User
-from app.apis.user.schema import ChangePasswordRequest, ForgetPasswordRequest, RefreshTokenRequest, UserCreateRequest, UserLoginRequest
+from app.apis.user.schema import ChangePasswordRequest, ForgetPasswordRequest, RefreshTokenRequest, ResetPasswordRequest, UserCreateRequest, UserLoginRequest
 from app.config import setting
 from sqlalchemy.orm import Session
 from jwt.exceptions import PyJWTError
 
 
 from app.config.security import create_access_token, create_refresh_token, decode_token, verify_password
-from app.utils.email_utility import EmailRequest, render_template, send_email
+from app.utils.email_utility import EmailRequest, send_email
 from app.utils.utility import authenticate_user, save_file
 
 settings = setting.get_settings()
@@ -142,7 +142,7 @@ class UserService:
                 )
             token = create_access_token(
                 data={"sub": user.email}, expires_delta=timedelta(minutes=5))
-            reset_link = f"http:localhost:8000/api/user/reset-password?token={
+            reset_link = f"http:localhost:8000/api/users/reset-password?token={
                 token}"
             email_request_data = EmailRequest(subject="Forget Password", template_body={"name": user.first_name, "reset_link": reset_link},
                                               to_email=user.email, template_name="forgot_password_template.html", is_html=True)
@@ -153,5 +153,32 @@ class UserService:
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=str(e)
+            )
+
+    def reset_password(token: str, data: ResetPasswordRequest, session: Session):
+        try:
+            payload = decode_token(token)
+            user_email = payload.get('email')
+            if user_email is None:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid Token"
+                )
+            user = session.query(User).filter(User.email == user_email, User.is_active == True,
+                                              User.is_delete == False).first()
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="User not found"
+                )
+            user.password = data.new_password
+            session.add(user)
+            session.commit()
+            return JSONResponse({"message": "Password reset successfully"}, 200)
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail=str(e)
             )
