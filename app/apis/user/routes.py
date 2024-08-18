@@ -2,6 +2,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends,  Form, status, UploadFi
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
+from app.apis.user.response import UserDetailResponse
 from app.apis.user.schema import ChangePasswordRequest, ForgetPasswordRequest, GenderEnum, RefreshTokenRequest, ResetPasswordRequest, RoleEnum
 from app.apis.user.service import UserService
 from app.config.database import get_session
@@ -83,8 +84,19 @@ async def forget_password(data: ForgetPasswordRequest, background_task: Backgrou
 def reset_password(token: str, data: ResetPasswordRequest, session: Session = Depends(get_session)):
     """Reset user password endpoiny
 
-    eturns:
+    Returns:
         dict: A dict with message
     """
 
     return UserService.reset_password(token, data, session)
+
+
+@user_router.get("/me", response_model=UserDetailResponse, status_code=status.HTTP_200_OK)
+def get_me(current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    """User detail endpoint
+
+    Returns:
+        dict: A dict with user information
+    """
+
+    return UserService.get_me(current_user, session)

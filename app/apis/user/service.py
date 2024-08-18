@@ -3,11 +3,14 @@ from fastapi import BackgroundTasks, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import exists
-from app.apis.user.models import Role, User
-from app.apis.user.schema import ChangePasswordRequest, ForgetPasswordRequest, RefreshTokenRequest, ResetPasswordRequest, UserCreateRequest, UserLoginRequest
+from app.apis.user.models import Role, User, user_roles
+from app.apis.user.response import UserDetailResponse
+from app.apis.user.schema import ChangePasswordRequest, ForgetPasswordRequest, GenderEnum, RefreshTokenRequest, ResetPasswordRequest, RoleEnum, UserCreateRequest, UserLoginRequest
+from app.apis.utils.models import DocumentMaster
 from app.config import setting
 from sqlalchemy.orm import Session
 from jwt.exceptions import PyJWTError
+from sqlalchemy import func
 
 
 from app.config.security import create_access_token, create_refresh_token, decode_token, verify_password
@@ -177,6 +180,26 @@ class UserService:
             session.commit()
             return JSONResponse({"message": "Password reset successfully"}, 200)
 
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+
+    def get_me(current_user: User, session: Session):
+        try:
+            user = UserDetailResponse(
+                uuid=current_user.uuid,
+                first_name=current_user.first_name,
+                last_name=current_user.last_name,
+                email=current_user.email,
+                mobile_no=current_user.mobile_no,
+                gender=GenderEnum(current_user.gender),
+                roles=[RoleEnum(role.name) for role in current_user.roles],
+                profile_image=current_user.profile_image.file_path
+            )
+
+            return user
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
