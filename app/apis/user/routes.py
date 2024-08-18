@@ -2,8 +2,9 @@ from fastapi import APIRouter, BackgroundTasks, Depends,  Form, status, UploadFi
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
-from app.apis.user.response import UserDetailResponse
-from app.apis.user.schema import ChangePasswordRequest, ForgetPasswordRequest, GenderEnum, RefreshTokenRequest, ResetPasswordRequest, RoleEnum
+from app.apis.user.response import UserDetailResponse, UserResponse
+from app.apis.user.schema import (ChangePasswordRequest, ForgetPasswordRequest, GenderEnum,
+                                  RefreshTokenRequest, ResetPasswordRequest, RoleEnum, UserFilters)
 from app.apis.user.service import UserService
 from app.config.database import get_session
 from app.config.security import get_current_user
@@ -100,3 +101,13 @@ def get_me(current_user: User = Depends(get_current_user), session: Session = De
     """
 
     return UserService.get_me(current_user, session)
+
+
+@user_router.get("/", response_model=list[UserResponse], status_code=status.HTTP_200_OK, dependencies=[Depends(has_role('ADMIN'))])
+def list_users(filters: UserFilters = Depends(), current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    """List Users with filter endpoint
+
+    Returns:
+        dict: A list of dict with user information
+    """
+    return UserService.list_users(filters, current_user, session)

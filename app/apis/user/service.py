@@ -2,13 +2,16 @@ from datetime import timedelta
 from fastapi import BackgroundTasks, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import exists
+from sqlalchemy import asc, desc, exists
 from app.apis.user.models import Role, User, user_roles
 from app.apis.user.response import UserDetailResponse
-from app.apis.user.schema import ChangePasswordRequest, ForgetPasswordRequest, GenderEnum, RefreshTokenRequest, ResetPasswordRequest, RoleEnum, UserCreateRequest, UserLoginRequest
+from app.apis.user.schema import (ChangePasswordRequest, ForgetPasswordRequest, GenderEnum,
+                                  RefreshTokenRequest, ResetPasswordRequest, RoleEnum,
+                                  UserCreateRequest, UserFilters, UserLoginRequest)
 from app.apis.utils.models import DocumentMaster
+from app.apis.utils.schema import SortOrderEnum
 from app.config import setting
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, Query
 from jwt.exceptions import PyJWTError
 from sqlalchemy import func
 
@@ -205,3 +208,43 @@ class UserService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=str(e)
             )
+
+    def list_users(filters: UserFilters, current_user, session: Session):
+        try:
+            query = session.query(User).filter(
+                User.is_delete == False, User.id != current_user.id).outerjoin(
+                    user_roles, user_roles.c.user_id == User.id
+            ).outerjoin(
+                    Role, Role.id == user_roles.c.role_id
+            ).outerjoin(
+                    DocumentMaster, DocumentMaster.document_id == User.profile_image_id
+            )
+            query = UserService.query_criteria(query, filters)
+            query = query.all()
+            return query
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+
+    def query_criteria(query: Query, filters: UserFilters):
+        if filters.first_name:
+            query = query.filter(
+                User.first_name.ilike(f"%{filter.first_name}%"))
+        if filters.gender:
+            query = query.filter(User.gender == filters.gender)
+        if filters.mobile_no:
+            query = query.filter(User.mobile_no == filters.mobile_no)
+
+        # if filters.sort_order == SortOrderEnum.ASC:
+        #     query = query.order_by(*[asc(getattr(User, col))
+        #                            for col in filters.sort_by])
+        # else:
+        #     query = query.order_by(*[desc(getattr(User, col))
+        #                            for col in filters.sort_by])
+        offset = (filters.page - 1) * filters.per_page
+        query = query.offset(offset).limit(filters.per_page)
+
+        return query

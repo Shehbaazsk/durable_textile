@@ -1,4 +1,5 @@
 
+from enum import Enum
 from pydantic import BaseModel, ConfigDict
 
 
@@ -7,3 +8,8 @@ class BaseRequest(BaseModel):
                               validate_assignment=True,
                               use_enum_values=True,
                               str_strip_whitespace=True)
+
+
+class SortOrderEnum(str, Enum):
+    ASC = "asc"
+    DESC = "desc"

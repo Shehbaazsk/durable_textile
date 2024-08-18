@@ -1,7 +1,9 @@
+from dataclasses import field
+from typing import Optional
 from pydantic import BaseModel, EmailStr, Field
 from enum import Enum
 
-from app.apis.utils.schema import BaseRequest
+from app.apis.utils.schema import BaseRequest, SortOrderEnum
 
 
 class GenderEnum(str, Enum):
@@ -57,3 +59,19 @@ class ForgetPasswordRequest(BaseRequest):
 
 class ResetPasswordRequest(BaseRequest):
     new_password: str
+
+
+class UserSortEnum(str, Enum):
+    gender = "gender"
+    created_at = "created_at"
+
+
+class UserFilters(BaseRequest):
+    first_name: str | None = None
+    gender: GenderEnum | None = None
+    mobile_no: str | None = None
+    page: int = Field(default=1, ge=1)
+    per_page: int = Field(default=10, ge=1)
+    # sort_by: list[UserSortEnum] | None = field(
+    #     default=[UserSortEnum.created_at])
+    sort_order: SortOrderEnum | None = field(default=SortOrderEnum.DESC)
