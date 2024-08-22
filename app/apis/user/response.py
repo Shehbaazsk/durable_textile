@@ -18,11 +18,10 @@ class UserDetailResponse(BaseResponse):
 
 
 class UserResponse(BaseResponse):
-    id: int
-    first_name: str
-    last_name: str
+    first_name: str | None
+    last_name: str | None
     email: str
-    mobile_no: str
-    gender: GenderEnum
-    roles: list[RoleRespone]
-    profile_image: DocumentMasterResponse
+    mobile_no: str | None
+    gender: GenderEnum | None
+    roles: list[str] | None
+    profile_image: str | None

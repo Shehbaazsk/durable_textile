@@ -4,10 +4,10 @@ from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import asc, desc, exists
 from app.apis.user.models import Role, User, user_roles
-from app.apis.user.response import UserDetailResponse
+from app.apis.user.response import UserDetailResponse, UserResponse
 from app.apis.user.schema import (ChangePasswordRequest, ForgetPasswordRequest, GenderEnum,
                                   RefreshTokenRequest, ResetPasswordRequest, RoleEnum,
-                                  UserCreateRequest, UserFilters, UserLoginRequest)
+                                  UserCreateRequest, UserFilters, UserLoginRequest, UserSortEnum)
 from app.apis.utils.models import DocumentMaster
 from app.apis.utils.schema import SortOrderEnum
 from app.config import setting
@@ -34,12 +34,6 @@ class UserService:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"User with email {email} already exists"
-            )
-        if session.query(User).filter(
-                User.email == email, User.is_active == True, User.is_delete == False).exists():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"User with {email} already exist"
             )
         document_id = None
         if profile_image:
@@ -209,19 +203,31 @@ class UserService:
                 detail=str(e)
             )
 
-    def list_users(filters: UserFilters, current_user, session: Session):
+    def list_users(filters: UserFilters, sort_by: list[UserSortEnum], current_user, session: Session):
         try:
-            query = session.query(User).filter(
+            query = session.query(User.uuid, User.first_name, User.last_name, User.email, User.mobile_no,
+                                  User.gender, func.group_concat(
+                                      Role.name).label("roles"),
+                                  DocumentMaster.file_path.label('profile_image')).filter(
                 User.is_delete == False, User.id != current_user.id).outerjoin(
                     user_roles, user_roles.c.user_id == User.id
             ).outerjoin(
                     Role, Role.id == user_roles.c.role_id
             ).outerjoin(
                     DocumentMaster, DocumentMaster.document_id == User.profile_image_id
-            )
-            query = UserService.query_criteria(query, filters)
+            ).group_by(User.id)
+            query = UserService.query_criteria(query, filters, sort_by)
             query = query.all()
-            return query
+            return [{
+                'uuid': result.uuid,
+                'first_name': result.first_name,
+                'last_name': result.last_name,
+                'email': result.email,
+                'mobile_no': result.mobile_no,
+                'gender': result.gender,
+                'roles': result.roles.split(',') if result.roles else [],
+                'profile_image': result.profile_image
+            }for result in query]
 
         except Exception as e:
             raise HTTPException(
@@ -229,21 +235,27 @@ class UserService:
                 detail=str(e)
             )
 
-    def query_criteria(query: Query, filters: UserFilters):
+    def query_criteria(query: Query, filters: UserFilters, sort_by: list[UserSortEnum]):
         if filters.first_name:
             query = query.filter(
-                User.first_name.ilike(f"%{filter.first_name}%"))
+                User.first_name.ilike(f"%{filters.first_name}%"))
         if filters.gender:
             query = query.filter(User.gender == filters.gender)
         if filters.mobile_no:
-            query = query.filter(User.mobile_no == filters.mobile_no)
+            query = query.filter(User.mobile_no.like(f"%{filters.mobile_no}%"))
 
-        # if filters.sort_order == SortOrderEnum.ASC:
-        #     query = query.order_by(*[asc(getattr(User, col))
-        #                            for col in filters.sort_by])
-        # else:
-        #     query = query.order_by(*[desc(getattr(User, col))
-        #                            for col in filters.sort_by])
+        if sort_by:
+            for sort in sort_by:
+                field_name = sort.value.lstrip("-")
+                try:
+                    field = getattr(User, field_name)
+                except AttributeError:
+                    raise ValueError(f"Invalid sort field: {field_name}")
+                if sort.value.startswith('-'):
+                    query = query.order_by(desc(field))
+                else:
+                    query = query.order_by(asc(field))
+
         offset = (filters.page - 1) * filters.per_page
         query = query.offset(offset).limit(filters.per_page)
 

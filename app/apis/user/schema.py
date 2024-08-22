@@ -1,5 +1,6 @@
 from dataclasses import field
 from typing import Optional
+from fastapi import Query
 from pydantic import BaseModel, EmailStr, Field
 from enum import Enum
 
@@ -61,9 +62,10 @@ class ResetPasswordRequest(BaseRequest):
     new_password: str
 
 
-class UserSortEnum(str, Enum):
+class UserSortEnum(Enum):
     gender = "gender"
     created_at = "created_at"
+    desc_created_at = "-created_at"
 
 
 class UserFilters(BaseRequest):
@@ -72,6 +74,3 @@ class UserFilters(BaseRequest):
     mobile_no: str | None = None
     page: int = Field(default=1, ge=1)
     per_page: int = Field(default=10, ge=1)
-    # sort_by: list[UserSortEnum] | None = field(
-    #     default=[UserSortEnum.created_at])
-    sort_order: SortOrderEnum | None = field(default=SortOrderEnum.DESC)

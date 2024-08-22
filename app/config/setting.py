@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     MYSQL_PASS: str = os.environ.get("MYSQL_PASSWORD", 'root')
     MYSQL_PORT: int = int(os.environ.get("MYSQL_PORT", 3306))
     MYSQL_DB: str = os.environ.get("MYSQL_DB", 'fastapi')
+    MYSQL_ECHO: bool = os.environ.get("MYSQL_ECHO", True)
     DATABASE_URI: str = f"mysql+pymysql://{MYSQL_USER}:{
         MYSQL_PASS}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}"
 

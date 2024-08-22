@@ -5,7 +5,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 import jwt
 from pydantic import BaseModel, EmailStr
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.apis.user.schema import TokenData
 from app.config.database import get_session
 from app.config.setting import get_settings
@@ -81,8 +81,8 @@ def get_current_user(db: Session = Depends(get_session), token: str = Depends(oa
         token_data = TokenScheme(email=email)
     except Exception:
         raise credentials_exception
-    user = db.query(User).filter(User.email == token_data.email,
-                                 User.is_delete == False, User.is_active == True).first()
+    user = db.query(User).options(joinedload(User.roles)).filter(User.email == token_data.email,
+                                                                 User.is_delete == False, User.is_active == True).first()
     if user is None:
         raise credentials_exception
     return user
