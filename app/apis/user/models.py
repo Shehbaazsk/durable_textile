@@ -1,7 +1,6 @@
-from typing import Optional
 from sqlalchemy import BigInteger, Column, Enum, ForeignKey, String, Table
 from sqlalchemy.orm import relationship
-from app.apis.utils.models import CommonModel, DocumentMaster
+from app.apis.utils.models import CommonModel
 from app.config.database import Base
 from app.config.security import hash_password
 

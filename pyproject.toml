@@ -1,2 +1,4 @@
 [tool.ruff]
 ignore = ["E712"]
+# Exclude directories or files
+exclude = ["migrations"]

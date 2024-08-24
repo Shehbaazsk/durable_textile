@@ -1,10 +1,7 @@
-from dataclasses import field
-from typing import Optional
-from fastapi import Query
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import EmailStr, Field
 from enum import Enum
 
-from app.apis.utils.schema import BaseRequest, SortOrderEnum
+from app.apis.utils.schema import BaseRequest
 
 
 class GenderEnum(str, Enum):

@@ -1,11 +1,13 @@
-from sqlalchemy.orm import Session
 from contextlib import contextmanager
 
-from app.apis.user.models import Role, User, UserRole
-from app.config.database import Base, engine, get_session
+from sqlalchemy.orm import Session
+
+from app.apis.user.models import Role, User
+from app.config.database import Base, engine
 
 # Create tables
 Base.metadata.create_all(bind=engine)
+
 
 # Modify get_session to be a proper context manager
 @contextmanager
@@ -16,9 +18,10 @@ def get_seed_session():
         session.commit()
     except Exception as e:
         session.rollback()
-        raise
+        raise e
     finally:
         session.close()
+
 
 def seed_roles(session):
     roles = [
@@ -28,6 +31,7 @@ def seed_roles(session):
     session.add_all(roles)
     session.commit()
 
+
 def seed_users(session):
     user = User(
         first_name="Admin",
@@ -35,9 +39,9 @@ def seed_users(session):
         password="adminpass",
         mobile_no="1234567890",
         gender="M",
-        profile_image_id=None  # Assuming no profile image for now
+        profile_image_id=None,  # Assuming no profile image for now
     )
-    role = session.query(Role).filter(Role.name=="ADMIN").first()
+    role = session.query(Role).filter(Role.name == "ADMIN").first()
     user.roles.append(role)
     session.add(user)
     session.commit()

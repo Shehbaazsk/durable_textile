@@ -1,9 +1,6 @@
 from email.mime.application import MIMEApplication
-import aiofiles
 from pathlib import Path
-from fastapi.responses import JSONResponse
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
-from jinja2 import Template
 from pydantic import BaseModel, EmailStr
 
 from app.config.setting import get_settings

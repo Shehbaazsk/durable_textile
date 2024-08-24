@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
@@ -10,7 +10,6 @@ from app.apis.user.schema import TokenData
 from app.config.database import get_session
 from app.config.setting import get_settings
 from passlib.context import CryptContext
-import pytz
 
 settings = get_settings()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/users/login")
