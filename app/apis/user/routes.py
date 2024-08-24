@@ -1,7 +1,9 @@
+from uuid import UUID, uuid4
 from fastapi import APIRouter, BackgroundTasks, Depends,  Form, Query, status, UploadFile
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import EmailStr
+from pydantic import UUID4, EmailStr
 from sqlalchemy.orm import Session
+from app.apis import user
 from app.apis.user.response import UserDetailResponse, UserResponse
 from app.apis.user.schema import (ChangePasswordRequest, ForgetPasswordRequest, GenderEnum,
                                   RefreshTokenRequest, ResetPasswordRequest, RoleEnum, UserFilters, UserSortEnum)
@@ -115,3 +117,14 @@ def list_users(filters: UserFilters = Depends(),
         dict: A list of dict with user information
     """
     return UserService.list_users(filters, sort_by, current_user, session)
+
+
+@user_router.get("/{user_uuid}", response_model=UserDetailResponse, status_code=status.HTTP_200_OK, dependencies=[Depends(has_role('ADMIN'))])
+def get_user_by_uuid(user_uuid: str, session: Session = Depends(get_session)):
+    """Get User by it's UUID
+
+    Returns:
+        dict: a dict with user information
+    """
+
+    return UserService.get_user_by_uuid(user_uuid, session)

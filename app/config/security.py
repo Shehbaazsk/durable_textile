@@ -66,7 +66,7 @@ def decode_token(token: str):
         )
 
 
-def get_current_user(db: Session = Depends(get_session), token: str = Depends(oauth2_scheme)):
+def get_current_user(session: Session = Depends(get_session), token: str = Depends(oauth2_scheme)):
     from app.apis.user.models import User
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -81,8 +81,8 @@ def get_current_user(db: Session = Depends(get_session), token: str = Depends(oa
         token_data = TokenScheme(email=email)
     except Exception:
         raise credentials_exception
-    user = db.query(User).options(joinedload(User.roles)).filter(User.email == token_data.email,
-                                                                 User.is_delete == False, User.is_active == True).first()
+    user = session.query(User).options(joinedload(User.roles)).filter(User.email == token_data.email,
+                                                                      User.is_delete == False, User.is_active == True).first()
     if user is None:
         raise credentials_exception
     return user
