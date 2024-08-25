@@ -379,3 +379,20 @@ class UserService:
         except Exception as e:
             logger.error(e)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    def delete_user(user_uuid: str, session: Session):
+        try:
+            user = (
+                session.query(User)
+                .filter(User.uuid == user_uuid, User.is_delete == False)
+                .first()
+            )
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+                )
+            user.is_delete = True
+            return {"message": "User Deleted Successfully"}
+        except Exception as e:
+            logger.error(e)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

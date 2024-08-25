@@ -194,3 +194,18 @@ def active_or_deactivate_user(user_uuid: str, session: Session = Depends(get_ses
     """
 
     return UserService.activate_or_deactivate_user(user_uuid, session)
+
+
+@user_router.delete(
+    "/{user_uuid}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(has_role("ADMIN"))],
+)
+def delete_user(user_uuid: str, session: Session = Depends(get_session)):
+    """Delete User by it's UUID
+
+    Returns:
+        dict: a dict with user deleted message
+    """
+
+    return UserService.delete_user(user_uuid, session)
