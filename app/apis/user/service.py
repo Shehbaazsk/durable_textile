@@ -392,6 +392,8 @@ class UserService:
                     status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
                 )
             user.is_delete = True
+            session.commit()
+
             return {"message": "User Deleted Successfully"}
         except Exception as e:
             logger.error(e)
