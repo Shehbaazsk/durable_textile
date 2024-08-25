@@ -20,6 +20,7 @@ from app.apis.user.schema import (
 )
 from app.apis.utils.models import DocumentMaster
 from app.config import setting
+from app.config.logger_config import logger
 from app.config.security import (
     create_access_token,
     create_refresh_token,
@@ -47,8 +48,8 @@ class UserService:
         user_exists = session.query(
             exists().where(
                 User.email == email,
-                User.is_active == True,  # noqa: E712
-                User.is_delete == False,  # noqa: E712
+                User.is_active == True,
+                User.is_delete == False,
             )
         ).scalar()
         if user_exists:
@@ -111,6 +112,7 @@ class UserService:
                 "token_type": "bearer",
             }
         except Exception as e:
+            logger.error(e)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
     def refresh_token(refresh_token: RefreshTokenRequest, session: Session):
@@ -122,6 +124,7 @@ class UserService:
                     status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Token"
                 )
         except Exception as e:
+            logger.error(e)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
         # Generate new access and refresh tokens
@@ -153,6 +156,7 @@ class UserService:
             session.commit()
             return JSONResponse({"message": "Password change successfully"})
         except Exception as e:
+            logger.error(e)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
     async def forget_password(
@@ -189,6 +193,7 @@ class UserService:
 
             return JSONResponse({"message": "Email with reset link sent successfully"})
         except Exception as e:
+            logger.error(e)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
     def reset_password(token: str, data: ResetPasswordRequest, session: Session):
@@ -218,6 +223,7 @@ class UserService:
             return JSONResponse({"message": "Password reset successfully"}, 200)
 
         except Exception as e:
+            logger.error(e)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     def get_me(current_user: User, session: Session):
@@ -230,11 +236,14 @@ class UserService:
                 mobile_no=current_user.mobile_no,
                 gender=GenderEnum(current_user.gender),
                 roles=[RoleEnum(role.name) for role in current_user.roles],
-                profile_image=current_user.profile_image.file_path,
+                profile_image=current_user.profile_image.file_path
+                if current_user.profile_image_id
+                else None,
             )
 
             return user
         except Exception as e:
+            logger.error(e)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     def list_users(
@@ -280,6 +289,7 @@ class UserService:
             ]
 
         except Exception as e:
+            logger.error(e)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     def query_criteria(query: Query, filters: UserFilters, sort_by: list[UserSortEnum]):
@@ -346,4 +356,26 @@ class UserService:
                 "profile_image": user.profile_image,
             }
         except Exception as e:
+            logger.error(e)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    def activate_or_deactivate_user(user_uuid: str, session: Session):
+        try:
+            user = (
+                session.query(User)
+                .filter(User.uuid == user_uuid, User.is_delete == False)
+                .first()
+            )
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+                )
+            msg = "activated" if not user.is_active else "deactivated"
+            user.is_active = not user.is_active
+            session.commit()
+
+            return {"message": f"User  {msg} successfully"}
+
+        except Exception as e:
+            logger.error(e)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

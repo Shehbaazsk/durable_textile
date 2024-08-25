@@ -1,15 +1,16 @@
 from datetime import timedelta
 from typing import Optional
 
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-import jwt
+from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session, joinedload
+
 from app.apis.user.schema import TokenData
 from app.config.database import get_session
 from app.config.setting import get_settings
-from passlib.context import CryptContext
 
 settings = get_settings()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/users/login")
@@ -30,43 +31,54 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     from app.utils.utility import get_current_indian_time
+
     to_encode = data.copy()
-    expire = get_current_indian_time() + (expires_delta if expires_delta else timedelta(
-        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = get_current_indian_time() + (
+        expires_delta
+        if expires_delta
+        else timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
-        to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+        to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM
+    )
     return encoded_jwt
 
 
 def create_refresh_token(data: dict, expires_delta: timedelta | None = None):
     from app.utils.utility import get_current_indian_time
+
     to_encode = data.copy()
-    expire = get_current_indian_time() + (expires_delta if expires_delta else timedelta(
-        minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES))
+    expire = get_current_indian_time() + (
+        expires_delta
+        if expires_delta
+        else timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
+    )
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
-        to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+        to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM
+    )
     return encoded_jwt
 
 
 def decode_token(token: str):
     try:
-        payload = jwt.decode(token, settings.JWT_SECRET,
-                             algorithms=[settings.JWT_ALGORITHM])
+        payload = jwt.decode(
+            token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
+        )
         email: str = payload.get("sub")
         if email is None:
             raise jwt.PyJWTError
         return TokenData(email=email).model_dump()
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
 
-def get_current_user(session: Session = Depends(get_session), token: str = Depends(oauth2_scheme)):
+def get_current_user(
+    session: Session = Depends(get_session), token: str = Depends(oauth2_scheme)
+):
     from app.apis.user.models import User
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -80,8 +92,16 @@ def get_current_user(session: Session = Depends(get_session), token: str = Depen
         token_data = TokenScheme(email=email)
     except Exception:
         raise credentials_exception
-    user = session.query(User).options(joinedload(User.roles)).filter(User.email == token_data.email,
-                                                                      User.is_delete == False, User.is_active == True).first()
+    user = (
+        session.query(User)
+        .options(joinedload(User.roles))
+        .filter(
+            User.email == token_data.email,
+            User.is_delete == False,
+            User.is_active == True,
+        )
+        .first()
+    )
     if user is None:
         raise credentials_exception
     return user

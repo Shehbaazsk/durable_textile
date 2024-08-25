@@ -181,9 +181,16 @@ def get_user_by_uuid(user_uuid: str, session: Session = Depends(get_session)):
 
 
 @user_router.get(
-    "/{user_uuid}",
+    "/change-status/{user_uuid}",
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(has_role("ADMIN"))],
 )
 def active_or_deactivate_user(user_uuid: str, session: Session = Depends(get_session)):
-    pass
+    """Activate or Deactiavte User
+
+    Returns:
+        dict: a dict with user active status
+
+    """
+
+    return UserService.activate_or_deactivate_user(user_uuid, session)
