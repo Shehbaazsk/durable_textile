@@ -91,7 +91,11 @@ def save_file(
 def authenticate_user(session: Session, email: str, password: str):
     from app.apis.user.models import User
 
-    user = session.query(User).filter(User.email == email).first()
+    user = (
+        session.query(User)
+        .filter(User.email == email, User.is_active == True, User.is_delete == False)
+        .first()
+    )
     if not user:
         return False
     if not verify_password(password, user._password):

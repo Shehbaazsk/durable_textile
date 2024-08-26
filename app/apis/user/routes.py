@@ -1,4 +1,13 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, Form, Query, UploadFile, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    Form,
+    HTTPException,
+    Query,
+    UploadFile,
+    status,
+)
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
@@ -13,6 +22,7 @@ from app.apis.user.schema import (
     RoleEnum,
     UserFilters,
     UserSortEnum,
+    UserUpdateRequest,
 )
 from app.apis.user.service import UserService
 from app.config.database import get_session
@@ -88,7 +98,7 @@ def refresh_token(
     return UserService.refresh_token(refresh_token, session)
 
 
-@user_router.put("/change-password", status_code=status.HTTP_202_ACCEPTED)
+@user_router.patch("/change-password", status_code=status.HTTP_202_ACCEPTED)
 def change_password(
     data: ChangePasswordRequest,
     current_user: User = Depends(get_current_user),
@@ -209,3 +219,41 @@ def delete_user(user_uuid: str, session: Session = Depends(get_session)):
     """
 
     return UserService.delete_user(user_uuid, session)
+
+
+@user_router.patch(
+    "/{user_uuid}",
+    status_code=status.HTTP_200_OK,
+)
+def udpate_user(
+    user_uuid: str,
+    first_name: str | None = Form(None, examples=["John"]),
+    last_name: str | None = Form(None, examples=["Doe"]),
+    mobile_no: str | None = Form(
+        None, min_length=10, max_length=10, examples=["1234567890"]
+    ),
+    gender: GenderEnum | None = Form(
+        None, description="Gender must be 'M' or 'F'", examples=["M", "F"]
+    ),
+    profile_image: UploadFile | None = None,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """Update  User by it's UUID and ony Admin or own user can update
+
+    Returns:
+        dict: a dict with user deleted message
+    """
+    if current_user.roles in [RoleEnum.ADMIN] or current_user.uuid == user_uuid:
+        data = UserUpdateRequest(
+            first_name=first_name,
+            last_name=last_name,
+            mobile_no=mobile_no,
+            gender=gender,
+        )
+        return UserService.update_user(user_uuid, data, profile_image, session)
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="You do not have permission to update this user.",
+    )

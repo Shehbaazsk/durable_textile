@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from fastapi import BackgroundTasks, HTTPException, status
+from fastapi import BackgroundTasks, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import asc, desc, exists, func
@@ -17,6 +17,7 @@ from app.apis.user.schema import (
     RoleEnum,
     UserFilters,
     UserSortEnum,
+    UserUpdateRequest,
 )
 from app.apis.utils.models import DocumentMaster
 from app.config import setting
@@ -113,7 +114,10 @@ class UserService:
             }
         except Exception as e:
             logger.error(e)
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="An unexpected error occurred. Please try again later.",
+            )
 
     def refresh_token(refresh_token: RefreshTokenRequest, session: Session):
         try:
@@ -125,7 +129,10 @@ class UserService:
                 )
         except Exception as e:
             logger.error(e)
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="An unexpected error occurred. Please try again later.",
+            )
 
         # Generate new access and refresh tokens
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -157,7 +164,10 @@ class UserService:
             return JSONResponse({"message": "Password change successfully"})
         except Exception as e:
             logger.error(e)
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="An unexpected error occurred. Please try again later.",
+            )
 
     async def forget_password(
         data: ForgetPasswordRequest, background_task: BackgroundTasks, session: Session
@@ -194,7 +204,10 @@ class UserService:
             return JSONResponse({"message": "Email with reset link sent successfully"})
         except Exception as e:
             logger.error(e)
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="An unexpected error occurred. Please try again later.",
+            )
 
     def reset_password(token: str, data: ResetPasswordRequest, session: Session):
         try:
@@ -224,7 +237,10 @@ class UserService:
 
         except Exception as e:
             logger.error(e)
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="An unexpected error occurred. Please try again later.",
+            )
 
     def get_me(current_user: User, session: Session):
         try:
@@ -244,7 +260,10 @@ class UserService:
             return user
         except Exception as e:
             logger.error(e)
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="An unexpected error occurred. Please try again later.",
+            )
 
     def list_users(
         filters: UserFilters,
@@ -290,7 +309,10 @@ class UserService:
 
         except Exception as e:
             logger.error(e)
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="An unexpected error occurred. Please try again later.",
+            )
 
     def query_criteria(query: Query, filters: UserFilters, sort_by: list[UserSortEnum]):
         if filters.first_name:
@@ -357,7 +379,10 @@ class UserService:
             }
         except Exception as e:
             logger.error(e)
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="An unexpected error occurred. Please try again later.",
+            )
 
     def activate_or_deactivate_user(user_uuid: str, session: Session):
         try:
@@ -378,7 +403,10 @@ class UserService:
 
         except Exception as e:
             logger.error(e)
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="An unexpected error occurred. Please try again later.",
+            )
 
     def delete_user(user_uuid: str, session: Session):
         try:
@@ -397,4 +425,61 @@ class UserService:
             return {"message": "User Deleted Successfully"}
         except Exception as e:
             logger.error(e)
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="An unexpected error occurred. Please try again later.",
+            )
+
+    def update_user(
+        user_uuid: str,
+        data: UserUpdateRequest,
+        profile_image: UploadFile | None,
+        session: Session,
+    ):
+        try:
+            user = (
+                session.query(User)
+                .filter(User.uuid == user_uuid, User.is_delete == False)
+                .first()
+            )
+
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+                )
+
+            if not user.is_active:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="User is deactived, contact Admin",
+                )
+
+            for attr in UserUpdateRequest.__annotations__.keys():
+                new_value = getattr(data, attr, None)
+                current_value = getattr(user, attr, None)
+
+                if (
+                    hasattr(user, attr)
+                    and new_value not in ("", None)
+                    and new_value != current_value
+                ):
+                    setattr(user, attr, new_value)
+
+            if profile_image:
+                document_id = save_file(
+                    profile_image,
+                    folder_name="users/profile_images",
+                    entity_type="PROFILE-IMAGE",
+                    session=session,
+                )
+                user.profile_image_id = document_id
+
+            session.commit()
+            return {"message": "User updated successfully."}
+
+        except Exception as e:
+            logger.error(e)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="An unexpected error occurred. Please try again later.",
+            )

@@ -1,28 +1,31 @@
 from sqlalchemy import BigInteger, Column, Enum, ForeignKey, String, Table
 from sqlalchemy.orm import relationship
+
 from app.apis.utils.models import CommonModel
 from app.config.database import Base
 from app.config.security import hash_password
 
 
 class User(CommonModel):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id = Column(BigInteger(), primary_key=True, autoincrement=True)
     first_name = Column(String(50))
     last_name = Column(String(50))
     email = Column(String(100), unique=True, index=True, nullable=False)
     _password = Column(String(100))
     mobile_no = Column(String(10))
     gender = Column(Enum("M", "F"))
-    profile_image_id = Column(BigInteger(),
-                              ForeignKey('document_master.document_id'))
+    profile_image_id = Column(BigInteger(), ForeignKey("document_master.document_id"))
 
     # relationships
-    profile_image = relationship("DocumentMaster",
-                                 foreign_keys=[profile_image_id], backref="user_profile_image", uselist=False)
-    roles = relationship("Role", secondary="user_roles",
-                         backref="users")
+    profile_image = relationship(
+        "DocumentMaster",
+        foreign_keys=[profile_image_id],
+        backref="user_profile_image",
+        uselist=False,
+    )
+    roles = relationship("Role", secondary="user_roles", backref="users")
 
     @property
     def password(self):
@@ -33,19 +36,20 @@ class User(CommonModel):
         self._password = hash_password(password)
 
     def __repr__(self):
-        return f'<User {self.id}: {self.first_name} {self.last_name}>'
+        return f"<User {self.id}: {self.first_name} {self.last_name}>"
 
 
 class Role(CommonModel):
-    __tablename__ = 'roles'
+    __tablename__ = "roles"
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id = Column(BigInteger(), primary_key=True, autoincrement=True)
     name = Column(String(50), unique=True)
     description = Column(String(255))
 
 
 user_roles = Table(
-    'user_roles', Base.metadata,
-    Column('user_id', BigInteger, ForeignKey('users.id'), primary_key=True),
-    Column('role_id', BigInteger, ForeignKey('roles.id'), primary_key=True)
+    "user_roles",
+    Base.metadata,
+    Column("user_id", BigInteger(), ForeignKey("users.id"), primary_key=True),
+    Column("role_id", BigInteger(), ForeignKey("roles.id"), primary_key=True),
 )

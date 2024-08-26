@@ -70,8 +70,11 @@ def decode_token(token: str):
         if email is None:
             raise jwt.PyJWTError
         return TokenData(email=email).model_dump()
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="An unexpected error occurred. Please try again later.",
+        )
 
 
 def get_current_user(
