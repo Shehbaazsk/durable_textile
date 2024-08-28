@@ -52,3 +52,47 @@ class CollectionService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
             )
+
+    def update_collection(
+        collection_uuid: str,
+        name: str | None,
+        collection_image: UploadFile | None,
+        session: Session,
+    ):
+        try:
+            collection = (
+                session.query(Collection.id, Collection.name)
+                .filter(
+                    Collection.uuid == collection_uuid, Collection.is_delete == False
+                )
+                .first()
+            )
+            if not collection:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Collection not found",
+                )
+            if name and name != "" and name != collection.name:
+                collection.name = name
+
+            document_id = None
+            if collection_image:
+                document_id = save_file(
+                    collection_image,
+                    folder_name=f"collections/{collection.id}",
+                    entity_type="COLLECTION-IMAGE",
+                    session=session,
+                )
+                collection.collection_image_id = document_id
+            session.commit()
+            return {
+                "message": "Collection Updated Successfully",
+                "collection_uuid": collection_uuid,
+            }
+
+        except Exception as e:
+            logger.error(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An unexpected error occurred. Please try again later.",
+            )
