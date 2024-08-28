@@ -76,12 +76,11 @@ def save_file(
         )
 
         session.add(document)
-        session.commit()
-        session.refresh(document, attribute_names=["document_id"])
+        session.flush([document])
         logger.info(f"Document saved to database with ID: {
-                    document.document_id}")
+                    document.id}")
 
-        return document.document_id
+        return document.id
 
     except Exception as e:
         logger.error(f"Error saving file: {e}", exc_info=True)

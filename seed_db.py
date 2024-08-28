@@ -36,7 +36,7 @@ def seed_users(session):
     user = User(
         first_name="Admin",
         email="admin@gmail.com",
-        password="adminpass",
+        password="admin123",
         mobile_no="1234567890",
         gender="M",
         profile_image_id=None,  # Assuming no profile image for now

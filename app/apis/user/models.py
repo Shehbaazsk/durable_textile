@@ -9,14 +9,13 @@ from app.config.security import hash_password
 class User(CommonModel):
     __tablename__ = "users"
 
-    id = Column(BigInteger(), primary_key=True, autoincrement=True)
     first_name = Column(String(50))
     last_name = Column(String(50))
     email = Column(String(100), unique=True, index=True, nullable=False)
     _password = Column(String(100))
     mobile_no = Column(String(10))
     gender = Column(Enum("M", "F"))
-    profile_image_id = Column(BigInteger(), ForeignKey("document_master.document_id"))
+    profile_image_id = Column(BigInteger(), ForeignKey("document_master.id"))
 
     # relationships
     profile_image = relationship(
@@ -42,7 +41,6 @@ class User(CommonModel):
 class Role(CommonModel):
     __tablename__ = "roles"
 
-    id = Column(BigInteger(), primary_key=True, autoincrement=True)
     name = Column(String(50), unique=True)
     description = Column(String(255))
 

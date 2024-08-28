@@ -238,7 +238,7 @@ class UserService:
         except Exception as e:
             logger.error(e)
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
             )
 
@@ -261,7 +261,7 @@ class UserService:
         except Exception as e:
             logger.error(e)
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
             )
 
@@ -286,9 +286,7 @@ class UserService:
                 .filter(User.is_delete == False, User.id != current_user.id)
                 .outerjoin(user_roles, user_roles.c.user_id == User.id)
                 .outerjoin(Role, Role.id == user_roles.c.role_id)
-                .outerjoin(
-                    DocumentMaster, DocumentMaster.document_id == User.profile_image_id
-                )
+                .outerjoin(DocumentMaster, DocumentMaster.id == User.profile_image_id)
                 .group_by(User.id)
             )
             query = UserService.query_criteria(query, filters, sort_by)
@@ -310,7 +308,7 @@ class UserService:
         except Exception as e:
             logger.error(e)
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
             )
 
@@ -354,9 +352,7 @@ class UserService:
                 )
                 .outerjoin(user_roles, user_roles.c.user_id == User.id)
                 .outerjoin(Role, Role.id == user_roles.c.role_id)
-                .outerjoin(
-                    DocumentMaster, DocumentMaster.document_id == User.profile_image_id
-                )
+                .outerjoin(DocumentMaster, DocumentMaster.id == User.profile_image_id)
                 .filter(User.uuid == user_uuid, User.is_delete == False)
                 .group_by(User.id)
                 .first()
@@ -380,7 +376,7 @@ class UserService:
         except Exception as e:
             logger.error(e)
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
             )
 
@@ -404,7 +400,7 @@ class UserService:
         except Exception as e:
             logger.error(e)
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
             )
 
@@ -426,7 +422,7 @@ class UserService:
         except Exception as e:
             logger.error(e)
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
             )
 
@@ -480,6 +476,6 @@ class UserService:
         except Exception as e:
             logger.error(e)
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
             )
