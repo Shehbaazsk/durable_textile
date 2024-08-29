@@ -12,7 +12,7 @@ class CommonModel(Base):
 
     id = Column(BigInteger(), primary_key=True, autoincrement=True)
     uuid = Column(
-        CHAR(36),
+        CHAR(50),
         default=lambda: str(uuid.uuid4()),
         unique=True,
         index=True,

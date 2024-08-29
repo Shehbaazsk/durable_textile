@@ -46,44 +46,55 @@ class UserService:
         role,
         session: Session,
     ):
-        user_exists = session.query(
-            exists().where(
-                User.email == email,
-                User.is_active == True,
-                User.is_delete == False,
+        try:
+            user_exists = session.query(
+                exists().where(
+                    User.email == email,
+                    User.is_active == True,
+                    User.is_delete == False,
+                )
+            ).scalar()
+            if user_exists:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"User with email {email} already exists",
+                )
+            document_id = None
+            if profile_image:
+                document_id = save_file(
+                    profile_image,
+                    folder_name="users/profile_images",
+                    entity_type="PROFILE-IMAGE",
+                    session=session,
+                )
+
+            db_user = User(
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                mobile_no=mobile_no,
+                gender=gender,
+                profile_image_id=document_id,
             )
-        ).scalar()
-        if user_exists:
+            db_user.password = password
+
+            db_role = session.query(Role).filter(Role.name == role).first()
+            if not db_role:
+                return {"error": f"Role with {role} not found"}, 404
+            db_user.roles.append(db_role)
+            session.add(db_user)
+            session.commit()
+            return {"message ": "User Created Successfully"}
+
+        except HTTPException as http_exc:
+            raise http_exc
+
+        except Exception as e:
+            logger.error(e)
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"User with email {email} already exists",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An unexpected error occurred. Please try again later.",
             )
-        document_id = None
-        if profile_image:
-            document_id = save_file(
-                profile_image,
-                folder_name="users/profile_images",
-                entity_type="PROFILE-IMAGE",
-                session=session,
-            )
-
-        db_user = User(
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            mobile_no=mobile_no,
-            gender=gender,
-            profile_image_id=document_id,
-        )
-        db_user.password = password
-
-        db_role = session.query(Role).filter(Role.name == role).first()
-        if not db_role:
-            return {"error": f"Role with {role} not found"}, 404
-        db_user.roles.append(db_role)
-        session.add(db_user)
-        session.commit()
-        return {"message ": "User Created Successfully"}
 
     def login_user(session: Session, data: OAuth2PasswordRequestForm):
         try:
@@ -112,10 +123,14 @@ class UserService:
                 "refresh_token": refresh_token,
                 "token_type": "bearer",
             }
+
+        except HTTPException as http_exc:
+            raise http_exc
+
         except Exception as e:
             logger.error(e)
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
             )
 
@@ -127,28 +142,35 @@ class UserService:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Token"
                 )
+
+            access_token_expires = timedelta(
+                minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+            )
+            access_token = create_access_token(
+                data={"sub": user_email}, expires_delta=access_token_expires
+            )
+            refresh_token_expires = timedelta(
+                minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES
+            )
+            refresh_token = create_refresh_token(
+                data={"sub": user_email}, expires_delta=refresh_token_expires
+            )
+
+            return {
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "token_type": "bearer",
+            }
+
+        except HTTPException as http_exc:
+            raise http_exc
+
         except Exception as e:
             logger.error(e)
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
             )
-
-        # Generate new access and refresh tokens
-        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(
-            data={"sub": user_email}, expires_delta=access_token_expires
-        )
-        refresh_token_expires = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
-        refresh_token = create_refresh_token(
-            data={"sub": user_email}, expires_delta=refresh_token_expires
-        )
-
-        return {
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "token_type": "bearer",
-        }
 
     def change_password(
         data: ChangePasswordRequest, current_user: User, session: Session
@@ -162,10 +184,13 @@ class UserService:
             session.add(current_user)
             session.commit()
             return JSONResponse({"message": "Password change successfully"})
+        except HTTPException as http_exc:
+            raise http_exc
+
         except Exception as e:
             logger.error(e)
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
             )
 
@@ -202,10 +227,13 @@ class UserService:
             background_task.add_task(send_email, email_request_data)
 
             return JSONResponse({"message": "Email with reset link sent successfully"})
+        except HTTPException as http_exc:
+            raise http_exc
+
         except Exception as e:
             logger.error(e)
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
             )
 
@@ -235,6 +263,9 @@ class UserService:
             session.commit()
             return JSONResponse({"message": "Password reset successfully"}, 200)
 
+        except HTTPException as http_exc:
+            raise http_exc
+
         except Exception as e:
             logger.error(e)
             raise HTTPException(
@@ -258,6 +289,9 @@ class UserService:
             )
 
             return user
+        except HTTPException as http_exc:
+            raise http_exc
+
         except Exception as e:
             logger.error(e)
             raise HTTPException(
@@ -304,6 +338,9 @@ class UserService:
                 }
                 for result in query
             ]
+
+        except HTTPException as http_exc:
+            raise http_exc
 
         except Exception as e:
             logger.error(e)
@@ -373,6 +410,9 @@ class UserService:
                 "roles": user.roles.split(",") if user.roles else [],
                 "profile_image": user.profile_image,
             }
+        except HTTPException as http_exc:
+            raise http_exc
+
         except Exception as e:
             logger.error(e)
             raise HTTPException(
@@ -397,6 +437,9 @@ class UserService:
 
             return {"message": f"User  {msg} successfully"}
 
+        except HTTPException as http_exc:
+            raise http_exc
+
         except Exception as e:
             logger.error(e)
             raise HTTPException(
@@ -419,6 +462,9 @@ class UserService:
             session.commit()
 
             return {"message": "User Deleted Successfully"}
+        except HTTPException as http_exc:
+            raise http_exc
+
         except Exception as e:
             logger.error(e)
             raise HTTPException(
@@ -472,6 +518,9 @@ class UserService:
 
             session.commit()
             return {"message": "User updated successfully."}
+
+        except HTTPException as http_exc:
+            raise http_exc
 
         except Exception as e:
             logger.error(e)

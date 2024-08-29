@@ -102,16 +102,20 @@ def authenticate_user(session: Session, email: str, password: str):
     return user
 
 
-def has_role(required_role: str):
+def has_role(required_roles: list[str]):
     from app.apis.user.models import Role, User
 
     def role_checker(
         db: Session = Depends(get_session),
         current_user: User = Depends(get_current_user),
     ):
-        role = db.query(Role).filter(Role.name == required_role).first()
-        if role not in current_user.roles:
-            raise HTTPException(status_code=404, detail="Role not found")
-        return current_user
+        required_roles_from_db = (
+            db.query(Role.name).filter(Role.name.in_(required_roles)).all()
+        )
+        required_role_names = {role.name for role in required_roles_from_db}
+        for role in current_user.roles:
+            if role.name in required_role_names:
+                return current_user
+        raise HTTPException(status_code=403, detail="Access forbidden: Role not found")
 
     return role_checker

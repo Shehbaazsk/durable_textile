@@ -37,7 +37,7 @@ user_router = APIRouter(prefix="/users", tags=["Users"])
 @user_router.post(
     "/signup",
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(has_role("ADMIN"))],
+    dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
 )
 def create_user(
     first_name: str = Form(..., examples=["John"]),
@@ -158,7 +158,7 @@ def get_me(
 
 
 @user_router.get(
-    "/", status_code=status.HTTP_200_OK, dependencies=[Depends(has_role("ADMIN"))]
+    "/", status_code=status.HTTP_200_OK, dependencies=[Depends(has_role(["ADMIN"]))]
 )
 def list_users(
     filters: UserFilters = Depends(),
@@ -178,7 +178,7 @@ def list_users(
     "/{user_uuid}",
     response_model=UserDetailResponse,
     status_code=status.HTTP_200_OK,
-    dependencies=[Depends(has_role("ADMIN"))],
+    dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
 )
 def get_user_by_uuid(user_uuid: str, session: Session = Depends(get_session)):
     """Get User by it's UUID
@@ -193,7 +193,7 @@ def get_user_by_uuid(user_uuid: str, session: Session = Depends(get_session)):
 @user_router.get(
     "/change-status/{user_uuid}",
     status_code=status.HTTP_200_OK,
-    dependencies=[Depends(has_role("ADMIN"))],
+    dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
 )
 def active_or_deactivate_user(user_uuid: str, session: Session = Depends(get_session)):
     """Activate or Deactiavte User
@@ -209,7 +209,7 @@ def active_or_deactivate_user(user_uuid: str, session: Session = Depends(get_ses
 @user_router.delete(
     "/{user_uuid}",
     status_code=status.HTTP_200_OK,
-    dependencies=[Depends(has_role("ADMIN"))],
+    dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
 )
 def delete_user(user_uuid: str, session: Session = Depends(get_session)):
     """Delete User by it's UUID

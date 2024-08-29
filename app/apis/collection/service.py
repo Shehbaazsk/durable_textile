@@ -3,6 +3,7 @@ from sqlalchemy import exists
 from sqlalchemy.orm import Session
 
 from app.apis.collection.models import Collection
+from app.apis.utils.models import DocumentMaster
 from app.config.logger_config import logger
 from app.utils.utility import save_file
 
@@ -45,6 +46,9 @@ class CollectionService:
                 "message": "Collection Created Successfully",
                 "collection_uuid": collection.uuid,
             }
+
+        except HTTPException as http_exc:
+            raise http_exc
 
         except Exception as e:
             logger.error(e)
@@ -89,6 +93,48 @@ class CollectionService:
                 "message": "Collection Updated Successfully",
                 "collection_uuid": collection_uuid,
             }
+
+        except HTTPException as http_exc:
+            raise http_exc
+
+        except Exception as e:
+            logger.error(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An unexpected error occurred. Please try again later.",
+            )
+
+    def get_collection_by_uuid(
+        collection_uuid: str,
+        session: Session,
+    ):
+        try:
+            collection = (
+                session.query(
+                    Collection.uuid,
+                    Collection.name,
+                    DocumentMaster.file_path.label("collection_image"),
+                )
+                .filter(
+                    Collection.uuid == collection_uuid, Collection.is_delete == False
+                )
+                .outerjoin(
+                    DocumentMaster,
+                    (DocumentMaster.id == Collection.collection_image_id)
+                    & (DocumentMaster.is_delete == False),
+                )
+                .first()
+            )
+            if not collection:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Collection not found",
+                )
+
+            return collection
+
+        except HTTPException as http_exc:
+            raise http_exc
 
         except Exception as e:
             logger.error(e)

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Form, UploadFile, status
 from sqlalchemy.orm import Session
 
+from app.apis.collection.response import GetCollectionRespose
 from app.apis.collection.service import CollectionService
 from app.config.database import get_session
 from app.utils.utility import has_role
@@ -47,3 +48,21 @@ def update_collection(
     return CollectionService.update_collection(
         collection_uuid, name, collection_image, session
     )
+
+
+@collection_router.get(
+    "/collection_uuid",
+    status_code=status.HTTP_200_OK,
+    response_model=GetCollectionRespose,
+)
+def get_collection_by_uuid(
+    collection_uuid: str,
+    session: Session = Depends(get_session),
+):
+    """Get collection by UUID endpoint
+
+    Returns:
+        tuple[dict,int]: A dict with collection data and a status_code
+    """
+
+    return CollectionService.get_collection_by_uuid(collection_uuid, session)
