@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends, Form, UploadFile, status
+from fastapi import APIRouter, Depends, Form, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.apis.collection.response import GetCollectionRespose
+from app.apis.collection.schema import CollectionFilters, CollectionSortEnum
 from app.apis.collection.service import CollectionService
+from app.apis.user.models import User
 from app.config.database import get_session
+from app.config.security import get_current_user
 from app.utils.utility import has_role
 
 collection_router = APIRouter(prefix="/collections", tags=["Collections"])
@@ -57,6 +60,7 @@ def update_collection(
 )
 def get_collection_by_uuid(
     collection_uuid: str,
+    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     """Get collection by UUID endpoint
@@ -65,4 +69,26 @@ def get_collection_by_uuid(
         tuple[dict,int]: A dict with collection data and a status_code
     """
 
-    return CollectionService.get_collection_by_uuid(collection_uuid, session)
+    return CollectionService.get_collection_by_uuid(
+        collection_uuid, current_user, session
+    )
+
+
+@collection_router.get(
+    "/", status_code=status.HTTP_200_OK, response_model=list[GetCollectionRespose]
+)
+def list_collections(
+    filters: CollectionFilters = Depends(),
+    sort_by: list[CollectionSortEnum] = Query(
+        default=CollectionSortEnum.desc_created_at
+    ),
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """List collections endpoint
+
+    Returns:
+        tuple[dict,int]: A dict with collections data and a status_code
+    """
+
+    return CollectionService.list_collections(filters, sort_by, current_user, session)

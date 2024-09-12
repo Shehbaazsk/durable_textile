@@ -35,6 +35,7 @@ settings = setting.get_settings()
 
 
 class UserService:
+    @staticmethod
     def create_user(
         first_name,
         last_name,
@@ -96,6 +97,7 @@ class UserService:
                 detail="An unexpected error occurred. Please try again later.",
             )
 
+    @staticmethod
     def login_user(session: Session, data: OAuth2PasswordRequestForm):
         try:
             user = authenticate_user(session, data.username, data.password)
@@ -134,6 +136,7 @@ class UserService:
                 detail="An unexpected error occurred. Please try again later.",
             )
 
+    @staticmethod
     def refresh_token(refresh_token: RefreshTokenRequest, session: Session):
         try:
             payload = decode_token(refresh_token.refresh_token)
@@ -172,6 +175,7 @@ class UserService:
                 detail="An unexpected error occurred. Please try again later.",
             )
 
+    @staticmethod
     def change_password(
         data: ChangePasswordRequest, current_user: User, session: Session
     ):
@@ -194,6 +198,7 @@ class UserService:
                 detail="An unexpected error occurred. Please try again later.",
             )
 
+    @staticmethod
     async def forget_password(
         data: ForgetPasswordRequest, background_task: BackgroundTasks, session: Session
     ):
@@ -237,6 +242,7 @@ class UserService:
                 detail="An unexpected error occurred. Please try again later.",
             )
 
+    @staticmethod
     def reset_password(token: str, data: ResetPasswordRequest, session: Session):
         try:
             payload = decode_token(token)
@@ -273,6 +279,7 @@ class UserService:
                 detail="An unexpected error occurred. Please try again later.",
             )
 
+    @staticmethod
     def get_me(current_user: User, session: Session):
         try:
             user = UserDetailResponse(
@@ -299,6 +306,7 @@ class UserService:
                 detail="An unexpected error occurred. Please try again later.",
             )
 
+    @staticmethod
     def list_users(
         filters: UserFilters,
         sort_by: list[UserSortEnum],
@@ -349,6 +357,7 @@ class UserService:
                 detail="An unexpected error occurred. Please try again later.",
             )
 
+    @staticmethod
     def query_criteria(query: Query, filters: UserFilters, sort_by: list[UserSortEnum]):
         if filters.first_name:
             query = query.filter(User.first_name.ilike(f"%{filters.first_name}%"))
@@ -374,6 +383,7 @@ class UserService:
 
         return query
 
+    @staticmethod
     def get_user_by_uuid(user_uuid: str, session: Session):
         try:
             user = (
@@ -420,6 +430,7 @@ class UserService:
                 detail="An unexpected error occurred. Please try again later.",
             )
 
+    @staticmethod
     def activate_or_deactivate_user(user_uuid: str, session: Session):
         try:
             user = (
@@ -447,6 +458,7 @@ class UserService:
                 detail="An unexpected error occurred. Please try again later.",
             )
 
+    @staticmethod
     def delete_user(user_uuid: str, session: Session):
         try:
             user = (
@@ -472,6 +484,7 @@ class UserService:
                 detail="An unexpected error occurred. Please try again later.",
             )
 
+    @staticmethod
     def update_user(
         user_uuid: str,
         data: UserUpdateRequest,
