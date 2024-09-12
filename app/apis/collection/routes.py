@@ -5,6 +5,7 @@ from app.apis.collection.response import GetCollectionRespose
 from app.apis.collection.schema import CollectionFilters, CollectionSortEnum
 from app.apis.collection.service import CollectionService
 from app.apis.user.models import User
+from app.apis.user.schema import RoleEnum
 from app.config.database import get_session
 from app.config.security import get_current_user
 from app.utils.utility import has_role
@@ -15,7 +16,7 @@ collection_router = APIRouter(prefix="/collections", tags=["Collections"])
 @collection_router.post(
     "/",
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(has_role("ADMIN"))],
+    dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
 )
 def create_collection(
     name: str = Form(...),
@@ -34,7 +35,7 @@ def create_collection(
 @collection_router.patch(
     "/collection_uuid",
     status_code=status.HTTP_202_ACCEPTED,
-    dependencies=[Depends(has_role("ADMIN"))],
+    dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
 )
 def update_collection(
     collection_uuid: str,
@@ -92,3 +93,39 @@ def list_collections(
     """
 
     return CollectionService.list_collections(filters, sort_by, current_user, session)
+
+
+@collection_router.get(
+    "/collection_uuid/change-status",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
+)
+def change_collection_status(
+    collection_uuid: str,
+    session: Session = Depends(get_session),
+):
+    """Change collection status endpoint
+
+    Returns:
+        tuple[dict,int]: A dict with change status message and a status_code
+    """
+
+    return CollectionService.change_collection_status(collection_uuid, session)
+
+
+@collection_router.delete(
+    "/collection_uuid",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
+)
+def delete_collection(
+    collection_uuid: str,
+    session: Session = Depends(get_session),
+):
+    """Change collection status endpoint
+
+    Returns:
+        tuple[dict,int]: A dict with change status message and a status_code
+    """
+
+    return CollectionService.delete_collection(collection_uuid, session)

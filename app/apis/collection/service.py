@@ -52,10 +52,12 @@ class CollectionService:
             }
 
         except HTTPException as http_exc:
+            session.rollback()
             raise http_exc
 
         except Exception as e:
             logger.error(e)
+            session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
@@ -100,10 +102,12 @@ class CollectionService:
             }
 
         except HTTPException as http_exc:
+            session.rollback()
             raise http_exc
 
         except Exception as e:
             logger.error(e)
+            session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
@@ -223,3 +227,66 @@ class CollectionService:
         query = query.offset(offset).limit(filters.per_page)
 
         return query
+
+    @staticmethod
+    def change_collection_status(collection_uuid: str, session: Session):
+        try:
+            collection = (
+                session.query(Collection)
+                .filter(
+                    Collection.uuid == collection_uuid, Collection.is_delete == False
+                )
+                .first()
+            )
+            if not collection:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found"
+                )
+            msg = "activated" if not collection.is_active else "deactivated"
+            collection.is_active = not collection.is_active
+            session.commit()
+
+            return {"message": f"Collection  {msg} successfully"}
+
+        except HTTPException as http_exc:
+            session.rollback()
+            raise http_exc
+
+        except Exception as e:
+            logger.error(e)
+            session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An unexpected error occurred. Please try again later.",
+            )
+
+    @staticmethod
+    def delete_collection(collection_uuid: str, session: Session):
+        try:
+            collection = (
+                session.query(Collection)
+                .filter(
+                    Collection.uuid == collection_uuid, Collection.is_delete == False
+                )
+                .first()
+            )
+            if not collection:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found"
+                )
+            collection.is_delete = True
+            session.commit()
+
+            return {"message": "Collection deleted successfully"}
+
+        except HTTPException as http_exc:
+            session.rollback()
+            raise http_exc
+
+        except Exception as e:
+            logger.error(e)
+            session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An unexpected error occurred. Please try again later.",
+            )

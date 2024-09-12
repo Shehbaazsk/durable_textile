@@ -88,10 +88,12 @@ class UserService:
             return {"message ": "User Created Successfully"}
 
         except HTTPException as http_exc:
+            session.rollback()
             raise http_exc
 
         except Exception as e:
             logger.error(e)
+            session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
@@ -189,10 +191,12 @@ class UserService:
             session.commit()
             return JSONResponse({"message": "Password change successfully"})
         except HTTPException as http_exc:
+            session.rollback()
             raise http_exc
 
         except Exception as e:
             logger.error(e)
+            session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
@@ -270,10 +274,12 @@ class UserService:
             return JSONResponse({"message": "Password reset successfully"}, 200)
 
         except HTTPException as http_exc:
+            session.rollback()
             raise http_exc
 
         except Exception as e:
             logger.error(e)
+            session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
@@ -449,10 +455,12 @@ class UserService:
             return {"message": f"User  {msg} successfully"}
 
         except HTTPException as http_exc:
+            session.rollback()
             raise http_exc
 
         except Exception as e:
             logger.error(e)
+            session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
@@ -475,10 +483,12 @@ class UserService:
 
             return {"message": "User Deleted Successfully"}
         except HTTPException as http_exc:
+            session.rollback()
             raise http_exc
 
         except Exception as e:
             logger.error(e)
+            session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
@@ -533,10 +543,12 @@ class UserService:
             return {"message": "User updated successfully."}
 
         except HTTPException as http_exc:
+            session.rollback()
             raise http_exc
 
         except Exception as e:
             logger.error(e)
+            session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",

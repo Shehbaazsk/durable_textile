@@ -158,7 +158,9 @@ def get_me(
 
 
 @user_router.get(
-    "/", status_code=status.HTTP_200_OK, dependencies=[Depends(has_role(["ADMIN"]))]
+    "/",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
 )
 def list_users(
     filters: UserFilters = Depends(),
