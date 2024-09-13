@@ -35,7 +35,7 @@ class User(CommonModel):
         self._password = hash_password(password)
 
     def __repr__(self):
-        return f"<User {self.id}: {self.first_name} {self.last_name}>"
+        return f"<{self.__tablename__} - {self.id}>"
 
 
 class Role(CommonModel):
@@ -43,6 +43,9 @@ class Role(CommonModel):
 
     name = Column(String(50), unique=True)
     description = Column(String(255))
+
+    def __repr__(self):
+        return f"<{self.__tablename__} - {self.name}>"
 
 
 user_roles = Table(

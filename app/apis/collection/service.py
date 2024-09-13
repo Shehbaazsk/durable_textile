@@ -1,6 +1,11 @@
+from io import BytesIO
+
 from fastapi import HTTPException, UploadFile, status
+from fastapi.responses import StreamingResponse
+from jinja2 import Environment, FileSystemLoader
 from sqlalchemy import asc, desc, exists
 from sqlalchemy.orm import Query, Session
+from weasyprint import HTML
 
 from app.apis.collection.models import Collection
 from app.apis.collection.schema import CollectionFilters, CollectionSortEnum
@@ -278,6 +283,49 @@ class CollectionService:
             session.commit()
 
             return {"message": "Collection deleted successfully"}
+
+        except HTTPException as http_exc:
+            session.rollback()
+            raise http_exc
+
+        except Exception as e:
+            logger.error(e)
+            session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An unexpected error occurred. Please try again later.",
+            )
+
+    def export_collection_into_pdf(collection_uuid: str | None, session: Session):
+        try:
+            query = (
+                session.query(Collection.name, DocumentMaster.actual_path)
+                .outerjoin(
+                    DocumentMaster,
+                    DocumentMaster.id == Collection.collection_image_id,
+                )
+                .filter(Collection.is_delete == False)
+            )
+            if collection_uuid:
+                query = query.filter(Collection.uuid == collection_uuid)
+            collections = query.all()
+            if not collections:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found"
+                )
+
+            env = Environment(loader=FileSystemLoader("templates"))
+            template = env.get_template("collection_pdf.html")
+            html_content = template.render(collections=collections)
+
+            pdf_buffer = BytesIO()
+            HTML(string=html_content).write_pdf(pdf_buffer)
+            pdf_buffer.seek(0)
+            return StreamingResponse(
+                pdf_buffer,
+                media_type="application/pdf",
+                headers={"Content-Disposition": "attachment; filename=collections.pdf"},
+            )
 
         except HTTPException as http_exc:
             session.rollback()

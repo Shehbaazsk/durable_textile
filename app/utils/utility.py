@@ -60,6 +60,7 @@ def save_file(
         # Prepare file paths
         filename = secure_filename(upload_file.filename)
         file_path = os.path.join(module_directory, filename)
+        absolute_file_path = os.path.abspath(file_path)
         logger.info(f"Saving file to: {file_path}")
 
         # Save the file
@@ -72,7 +73,7 @@ def save_file(
             document_name=filename,
             file_path=file_path,
             entity_type=entity_type,
-            actual_path=file_path,
+            actual_path=absolute_file_path,
         )
 
         session.add(document)

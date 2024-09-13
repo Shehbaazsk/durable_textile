@@ -16,3 +16,6 @@ class Collection(CommonModel):
         foreign_keys=[collection_image_id],
         backref="collection_image",
     )
+
+    def __repr__(self):
+        return f"<{self.__tablename__} - {self.id}>"

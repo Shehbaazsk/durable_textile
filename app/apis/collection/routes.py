@@ -129,3 +129,21 @@ def delete_collection(
     """
 
     return CollectionService.delete_collection(collection_uuid, session)
+
+
+@collection_router.get(
+    "/export",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(has_role([RoleEnum.ADMIN, RoleEnum.STAFF]))],
+)
+def export_collection_into_pdf(
+    collection_uuid: str = Query(default=None),
+    session: Session = Depends(get_session),
+):
+    """Change collection status endpoint
+
+    Returns:
+        tuple[dict,int]: A dict with change status message and a status_code
+    """
+
+    return CollectionService.export_collection_into_pdf(collection_uuid, session)

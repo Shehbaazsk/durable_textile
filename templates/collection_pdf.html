@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collections Overview</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            line-height: 1.6;
+        }
+        .container {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .collection-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .image {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .no-image {
+            font-size: 18px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center; color: #333;">Collections Overview</h1>
+
+    <!-- Start of Collections -->
+    <!-- This section will be dynamically generated -->
+    {% for collection in collections %}
+    <div class="container">
+        <div class="collection-name">Collection: {{ collection.name }}</div>
+        {% if collection.actual_path %}
+            <img src="{{ collection.actual_path }}" class="image" alt="Image for {{ collection.name }}">
+        {% else %}
+            <p class="no-image">No image available</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+    <!-- End of Collections -->
+
+</body>
+</html>
