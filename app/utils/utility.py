@@ -49,8 +49,9 @@ def save_file(
     try:
         from app.apis.utils.models import DocumentMaster
 
-        logger.info(f"Attempting to save file: {upload_file.filename}, folder: {
-                    folder_name}, entity_type: {entity_type}")
+        logger.info(
+            f"Attempting to save file: {upload_file.filename}, folder: {folder_name}, entity_type: {entity_type}"
+        )
 
         # Ensure the folder exists
         module_directory = os.path.join(setting.UPLOAD_FOLDER, folder_name)
@@ -78,8 +79,7 @@ def save_file(
 
         session.add(document)
         session.flush([document])
-        logger.info(f"Document saved to database with ID: {
-                    document.id}")
+        logger.info(f"Document saved to database with ID: {document.id}")
 
         return document.id
 
