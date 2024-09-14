@@ -13,8 +13,9 @@ from app.config.database import get_session
 from app.config.setting import get_settings
 
 settings = get_settings()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/users/login")
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/users/login")
 
 
 class TokenScheme(BaseModel):

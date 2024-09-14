@@ -1,6 +1,7 @@
 import os
 import shutil
 from datetime import datetime
+from typing import Any
 
 import pytz
 from fastapi import Depends, HTTPException, UploadFile
@@ -55,7 +56,8 @@ def save_file(
 
         # Ensure the folder exists
         module_directory = os.path.join(setting.UPLOAD_FOLDER, folder_name)
-        os.makedirs(module_directory, exist_ok=True)
+        if not os.path.exists(module_directory):
+            os.makedirs(module_directory, exist_ok=True)
         logger.info(f"Directory created or exists: {module_directory}")
 
         # Prepare file paths
@@ -120,3 +122,48 @@ def has_role(required_roles: list[str]):
         raise HTTPException(status_code=403, detail="Access forbidden: Role not found")
 
     return role_checker
+
+
+def get_id_by_uuid(uuid, model, model_id_field, session):
+    """A utility function that retrieves the id of a record based on its uuid from a given model"""
+    try:
+        # Query to fetch the id using the uuid
+        id = (
+            session.query(model_id_field)
+            .filter(model.uuid == uuid, model.is_delete == False)
+            .scalar()
+        )
+
+        # If the ID is not found, return an error message
+        if not id:
+            return {"error": f"{model.__name__} id not found"}, 400
+
+        # Return the found ID
+        return id
+
+    except Exception as e:
+        # Log the exception and return an error message
+        logger.exception(e)
+        return {"error": str(e)}, 500
+
+
+def set_id_if_exists_in_dict(
+    uuid: str,
+    model: Any,
+    model_id_field: Any,
+    data_dict: dict,
+    data_dict_field: str,
+    session: Session,
+):
+    """Retrieve the ID from a UUID and update the provided dictionary with the result."""
+
+    id_result = get_id_by_uuid(uuid, model, model_id_field, session)
+
+    # Check if id is int, if it's not then it is error and return False
+    if isinstance(id_result, int):
+        data_dict[data_dict_field] = id_result
+        return True
+    else:
+        error_message, status_code = id_result
+        logger.error(f"Failed to retrieve ID: {error_message}")
+        return False

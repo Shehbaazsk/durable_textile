@@ -57,12 +57,10 @@ class CollectionService:
             }
 
         except HTTPException as http_exc:
-            session.rollback()
             raise http_exc
 
         except Exception as e:
             logger.error(e)
-            session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
@@ -107,12 +105,10 @@ class CollectionService:
             }
 
         except HTTPException as http_exc:
-            session.rollback()
             raise http_exc
 
         except Exception as e:
             logger.error(e)
-            session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
@@ -254,12 +250,10 @@ class CollectionService:
             return {"message": f"Collection  {msg} successfully"}
 
         except HTTPException as http_exc:
-            session.rollback()
             raise http_exc
 
         except Exception as e:
             logger.error(e)
-            session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
@@ -285,12 +279,10 @@ class CollectionService:
             return {"message": "Collection deleted successfully"}
 
         except HTTPException as http_exc:
-            session.rollback()
             raise http_exc
 
         except Exception as e:
             logger.error(e)
-            session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
@@ -328,12 +320,10 @@ class CollectionService:
             )
 
         except HTTPException as http_exc:
-            session.rollback()
             raise http_exc
 
         except Exception as e:
             logger.error(e)
-            session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",

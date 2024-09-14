@@ -17,12 +17,18 @@ class Hanger(CommonModel):
     count = Column(String(255))
 
     collection_id = Column(BigInteger(), ForeignKey("collections.id"))
+    hanger_image_id = Column(BigInteger(), ForeignKey("document_master.id"))
 
     # relationships
     collection = relationship(
         "Collection",
         foreign_keys=[collection_id],
         backref="collection_hanger",
+    )
+    hanger_image = relationship(
+        "DocumentMaster",
+        foreign_keys=[hanger_image_id],
+        backref="hanger_image",
     )
 
     def __repr__(self):

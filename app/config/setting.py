@@ -19,7 +19,9 @@ class Settings(BaseSettings):
     DATABASE_URI: str = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASS}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}"
 
     # DOCUMENT_CONFIGURATION
-    UPLOAD_FOLDER: str = os.environ.get("UPLOAD_FOLDER", "./uploads")
+    UPLOAD_FOLDER: str = os.environ.get(
+        "UPLOAD_FOLDER", "/home/shehbaaz/Documents/DurableTextile/uploads"
+    )
 
     # LOGGER_CONFIGURATION
     lOGGER_NAME: str = os.environ.get("LOGGER_NAME", "fastapi")
