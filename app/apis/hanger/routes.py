@@ -1,10 +1,18 @@
-from fastapi import APIRouter, Depends, Form, UploadFile, status
+from fastapi import APIRouter, Depends, Form, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
-from app.apis.hanger.schema import HangerCreateRequest, HangerUpdateRequest
+from app.apis.hanger.response import ListHangerRespose
+from app.apis.hanger.schema import (
+    HangerCreateRequest,
+    HangerFilters,
+    HangerSortEnum,
+    HangerUpdateRequest,
+)
 from app.apis.hanger.service import HangerService
+from app.apis.user.models import User
 from app.apis.user.schema import RoleEnum
 from app.config.database import get_session
+from app.config.security import get_current_user
 from app.utils.utility import has_role
 
 hanger_router = APIRouter(prefix="/hangers", tags=["Hangers"])
@@ -50,8 +58,8 @@ def create_hanger(
 
 
 @hanger_router.put(
-    "/{hanger_uuid}",
-    status_code=status.HTTP_201_CREATED,
+    "{hanger_uuid",
+    status_code=status.HTTP_202_ACCEPTED,
     dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
 )
 def update_hanger(
@@ -68,7 +76,7 @@ def update_hanger(
     hanger_image: UploadFile | None = None,
     session: Session = Depends(get_session),
 ):
-    """Create a new hanger endpoint
+    """Update hanger endpoint
 
     Returns:
         tuple[dict,int]: A dict with msg and a status_code
@@ -87,3 +95,44 @@ def update_hanger(
     )
 
     return HangerService.update_hanger(hanger_uuid, data, hanger_image, session)
+
+
+@hanger_router.get(
+    "/hanger_uuid",
+    status_code=status.HTTP_200_OK,
+    response_model=ListHangerRespose,
+)
+def get_hanger_by_uuid(
+    hanger_uuid: str,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """Get hanger by UUID endpoint
+
+    Returns:
+        tuple[dict,int]: A dict with collection data and a status_code
+    """
+
+    return HangerService.get_hanger_by_uuid(hanger_uuid, current_user, session)
+
+
+@hanger_router.get(
+    "/", status_code=status.HTTP_200_OK, response_model=list[ListHangerRespose]
+)
+def list_hangers(
+    filters: HangerFilters = Depends(),
+    sort_by: list[HangerSortEnum] = Query(default=HangerSortEnum.desc_created_at),
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """List hangers endpoint
+
+    Returns:
+        tuple[dict,int]: A dict with hanegr data and a status_code
+    """
+    filters = filters
+    sort_by = sort_by
+    current_user = current_user
+    session = session
+
+    return HangerService.list_hangers(filters, sort_by, current_user, session)
