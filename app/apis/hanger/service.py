@@ -288,3 +288,58 @@ class HangerService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred. Please try again later.",
             )
+
+    @staticmethod
+    def change_hanger_status(hanger_uuid: str, session: Session):
+        try:
+            hanger = (
+                session.query(Hanger)
+                .filter(Hanger.uuid == hanger_uuid, Hanger.is_delete == False)
+                .first()
+            )
+            if not hanger:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="hanger not found"
+                )
+            msg = "activated" if not hanger.is_active else "deactivated"
+            hanger.is_active = not hanger.is_active
+            session.commit()
+
+            return {"message": f"hanger {msg} successfully", "hanger_uuid": hanger_uuid}
+
+        except HTTPException as http_exc:
+            raise http_exc
+
+        except Exception as e:
+            logger.error(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An unexpected error occurred. Please try again later.",
+            )
+
+    @staticmethod
+    def delete_hanger(hanger_uuid: str, session: Session):
+        try:
+            hanger = (
+                session.query(Hanger)
+                .filter(Hanger.uuid == hanger_uuid, Hanger.is_delete == False)
+                .first()
+            )
+            if not hanger:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="hanger not found"
+                )
+            hanger.is_delete = True
+            session.commit()
+
+            return {"message": "hanger deleted successfully"}
+
+        except HTTPException as http_exc:
+            raise http_exc
+
+        except Exception as e:
+            logger.error(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An unexpected error occurred. Please try again later.",
+            )

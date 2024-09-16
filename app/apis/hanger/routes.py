@@ -57,7 +57,7 @@ def create_hanger(
     return HangerService.create_hanger(data, hanger_image, session)
 
 
-@hanger_router.put(
+@hanger_router.patch(
     "{hanger_uuid",
     status_code=status.HTTP_202_ACCEPTED,
     dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
@@ -136,3 +136,39 @@ def list_hangers(
     session = session
 
     return HangerService.list_hangers(filters, sort_by, current_user, session)
+
+
+@hanger_router.get(
+    "/hanger_uuid/change-status",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
+)
+def change_hanger_status(
+    hanger_uuid: str,
+    session: Session = Depends(get_session),
+):
+    """Change hanger status endpoint
+
+    Returns:
+        tuple[dict,int]: A dict with change status message and a status_code
+    """
+
+    return HangerService.change_hanger_status(hanger_uuid, session)
+
+
+@hanger_router.delete(
+    "/hanger_uuid",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
+)
+def delete_hanger(
+    hanger_uuid: str,
+    session: Session = Depends(get_session),
+):
+    """Change hanger status endpoint
+
+    Returns:
+        tuple[dict,int]: A dict with delete message and a status_code
+    """
+
+    return HangerService.delete_hanger(hanger_uuid, session)

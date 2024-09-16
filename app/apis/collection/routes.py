@@ -125,7 +125,7 @@ def delete_collection(
     """Change collection status endpoint
 
     Returns:
-        tuple[dict,int]: A dict with change status message and a status_code
+        tuple[dict,int]: A dict with delete message and a status_code
     """
 
     return CollectionService.delete_collection(collection_uuid, session)
