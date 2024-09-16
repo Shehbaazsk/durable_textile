@@ -8,6 +8,7 @@ from alembic import context
 #MODELS
 from app.apis.collection.models import *
 from app.apis.hanger.models import *
+from app.apis.sample.models import *
 from app.apis.user.models import *
 from app.apis.utils.models import *
 
