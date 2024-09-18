@@ -177,7 +177,7 @@ def list_users(
 
 
 @user_router.get(
-    "/{user_uuid}",
+    "/user_uuid",
     response_model=UserDetailResponse,
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
@@ -193,7 +193,7 @@ def get_user_by_uuid(user_uuid: str, session: Session = Depends(get_session)):
 
 
 @user_router.get(
-    "/change-status/{user_uuid}",
+    "/change-status/user_uuid",
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
 )
@@ -209,7 +209,7 @@ def active_or_deactivate_user(user_uuid: str, session: Session = Depends(get_ses
 
 
 @user_router.delete(
-    "/{user_uuid}",
+    "/user_uuid",
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
 )
@@ -224,7 +224,7 @@ def delete_user(user_uuid: str, session: Session = Depends(get_session)):
 
 
 @user_router.patch(
-    "/{user_uuid}",
+    "/user_uuid",
     status_code=status.HTTP_200_OK,
 )
 def udpate_user(
