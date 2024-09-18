@@ -5,6 +5,9 @@ from sqlalchemy.orm import Session
 from app.apis.hanger.models import Hanger
 from app.apis.sample.models import Sample
 from app.apis.sample.schema import SampleCreateRequest, SampleUpdateRequest
+from app.apis.user.models import User
+from app.apis.user.schema import RoleEnum
+from app.apis.utils.models import DocumentMaster
 from app.config.logger_config import logger
 from app.utils.utility import save_file, set_id_if_exists_in_dict
 
@@ -130,6 +133,56 @@ class SampleService:
             session.add(sample)
             session.commit()
             return {"message": "Sample Updated Sucessfully", "sample_uuid": sample_uuid}
+
+        except HTTPException as http_exc:
+            raise http_exc
+
+        except Exception as e:
+            logger.error(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An unexpected error occurred. Please try again later.",
+            )
+
+    @staticmethod
+    def get_sample_by_uuid(sample_uuid: str, current_user: User, session: Session):
+        try:
+            is_admin = any(role.name == RoleEnum.ADMIN for role in current_user.roles)
+            query = (
+                session.query(
+                    Sample.uuid,
+                    Sample.name,
+                    Sample.mill_reference_number,
+                    Sample.construction,
+                    Sample.composition,
+                    Sample.gsm,
+                    Sample.width,
+                    Sample.count,
+                    Hanger.uuid.label("hanger_uuid"),
+                    Hanger.name.label("hanger_name"),
+                    DocumentMaster.file_path.label("sample_image"),
+                )
+                .filter(Sample.uuid == sample_uuid, Sample.is_delete == False)
+                .outerjoin(
+                    Hanger,
+                    (Hanger.id == Sample.hanger_id) & (Hanger.is_delete == False),
+                )
+                .outerjoin(
+                    DocumentMaster,
+                    (DocumentMaster.id == Sample.sample_image_id)
+                    & (DocumentMaster.is_delete == False),
+                )
+            )
+            if not is_admin:
+                query = query.filter(Sample.is_active == True)
+            sample = query.first()
+            if not sample:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Sample not found",
+                )
+
+            return sample
 
         except HTTPException as http_exc:
             raise http_exc

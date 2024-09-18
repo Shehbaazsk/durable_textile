@@ -2,10 +2,13 @@ from fastapi import APIRouter, UploadFile, status
 from fastapi.params import Depends, Form
 from sqlalchemy.orm import Session
 
+from app.apis.sample.response import ListSampleRespose
 from app.apis.sample.schema import SampleCreateRequest, SampleUpdateRequest
 from app.apis.sample.service import SampleService
+from app.apis.user.models import User
 from app.apis.user.schema import RoleEnum
 from app.config.database import get_session
+from app.config.security import get_current_user
 from app.utils.utility import has_role
 
 sample_router = APIRouter(prefix="/sample", tags=["Samples"])
@@ -83,3 +86,80 @@ def update_sample(
     )
 
     return SampleService.update_sample(data, sample_image, session)
+
+
+@sample_router.get(
+    "/sample_uuid",
+    status_code=status.HTTP_200_OK,
+    response_model=ListSampleRespose,
+)
+def get_sample_by_uuid(
+    sample_uuid: str,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """Get sample by UUID endpoint
+
+    Returns:
+        tuple[dict,int]: A dict with sample data and a status_code
+    """
+
+    return SampleService.get_sample_by_uuid(sample_uuid, current_user, session)
+
+
+# @sample_router.get(
+#     "/", status_code=status.HTTP_200_OK, response_model=list[ListHangerRespose]
+# )
+# def list_hangers(
+#     filters: HangerFilters = Depends(),
+#     sort_by: list[HangerSortEnum] = Query(default=HangerSortEnum.desc_created_at),
+#     current_user: User = Depends(get_current_user),
+#     session: Session = Depends(get_session),
+# ):
+#     """List hangers endpoint
+
+#     Returns:
+#         tuple[dict,int]: A dict with hanegr data and a status_code
+#     """
+#     filters = filters
+#     sort_by = sort_by
+#     current_user = current_user
+#     session = session
+
+#     return HangerService.list_hangers(filters, sort_by, current_user, session)
+
+
+# # @sample_router.get(
+# #     "/hanger_uuid/change-status",
+# #     status_code=status.HTTP_200_OK,
+# #     dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
+# # )
+# # def change_hanger_status(
+# #     hanger_uuid: str,
+# #     session: Session = Depends(get_session),
+# # ):
+# #     """Change hanger status endpoint
+
+# #     Returns:
+# #         tuple[dict,int]: A dict with change status message and a status_code
+# #     """
+
+# #     return HangerService.change_hanger_status(hanger_uuid, session)
+
+
+# # @sample_router.delete(
+# #     "/hanger_uuid",
+# #     status_code=status.HTTP_200_OK,
+# #     dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
+# # )
+# # def delete_hanger(
+# #     hanger_uuid: str,
+# #     session: Session = Depends(get_session),
+# # ):
+# #     """Change hanger status endpoint
+
+# #     Returns:
+# #         tuple[dict,int]: A dict with delete message and a status_code
+# #     """
+
+# #     return HangerService.delete_hanger(hanger_uuid, session)

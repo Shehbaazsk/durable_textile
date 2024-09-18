@@ -110,7 +110,7 @@ def get_hanger_by_uuid(
     """Get hanger by UUID endpoint
 
     Returns:
-        tuple[dict,int]: A dict with collection data and a status_code
+        tuple[dict,int]: A dict with hanger data and a status_code
     """
 
     return HangerService.get_hanger_by_uuid(hanger_uuid, current_user, session)
@@ -128,7 +128,7 @@ def list_hangers(
     """List hangers endpoint
 
     Returns:
-        tuple[dict,int]: A dict with hanegr data and a status_code
+        tuple[dict,int]: A dict with hanger data and a status_code
     """
     filters = filters
     sort_by = sort_by
