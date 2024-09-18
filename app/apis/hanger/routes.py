@@ -58,7 +58,7 @@ def create_hanger(
 
 
 @hanger_router.patch(
-    "{hanger_uuid",
+    "hanger_uuid",
     status_code=status.HTTP_202_ACCEPTED,
     dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
 )
