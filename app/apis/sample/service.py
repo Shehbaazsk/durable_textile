@@ -279,3 +279,58 @@ class SampleService:
         query = query.offset(offset).limit(filters.per_page)
 
         return query
+
+    @staticmethod
+    def change_sample_status(sample_uuid: str, session: Session):
+        try:
+            sample = (
+                session.query(Sample)
+                .filter(Sample.uuid == sample_uuid, Sample.is_delete == False)
+                .first()
+            )
+            if not sample:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="sample not found"
+                )
+            msg = "activated" if not sample.is_active else "deactivated"
+            sample.is_active = not sample.is_active
+            session.commit()
+
+            return {"message": f"sample {msg} successfully", "sample_uuid": sample_uuid}
+
+        except HTTPException as http_exc:
+            raise http_exc
+
+        except Exception as e:
+            logger.error(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An unexpected error occurred. Please try again later.",
+            )
+
+    @staticmethod
+    def delete_sample(sample_uuid: str, session: Session):
+        try:
+            sample = (
+                session.query(Sample)
+                .filter(Sample.uuid == sample_uuid, Sample.is_delete == False)
+                .first()
+            )
+            if not sample:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="sample not found"
+                )
+            sample.is_delete = True
+            session.commit()
+
+            return {"message": "sample deleted successfully"}
+
+        except HTTPException as http_exc:
+            raise http_exc
+
+        except Exception as e:
+            logger.error(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An unexpected error occurred. Please try again later.",
+            )

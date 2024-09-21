@@ -131,37 +131,37 @@ def list_sample(
     return SampleService.list_samples(filters, sort_by, current_user, session)
 
 
-# # @sample_router.get(
-# #     "/hanger_uuid/change-status",
-# #     status_code=status.HTTP_200_OK,
-# #     dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
-# # )
-# # def change_hanger_status(
-# #     hanger_uuid: str,
-# #     session: Session = Depends(get_session),
-# # ):
-# #     """Change hanger status endpoint
+@sample_router.get(
+    "/sample_uuid/change-status",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
+)
+def change_sample_status(
+    sample_uuid: str,
+    session: Session = Depends(get_session),
+):
+    """Change sample status endpoint
 
-# #     Returns:
-# #         tuple[dict,int]: A dict with change status message and a status_code
-# #     """
+    Returns:
+        tuple[dict,int]: A dict with change status message and a status_code
+    """
 
-# #     return HangerService.change_hanger_status(hanger_uuid, session)
+    return SampleService.change_sample_status(sample_uuid, session)
 
 
-# # @sample_router.delete(
-# #     "/hanger_uuid",
-# #     status_code=status.HTTP_200_OK,
-# #     dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
-# # )
-# # def delete_hanger(
-# #     hanger_uuid: str,
-# #     session: Session = Depends(get_session),
-# # ):
-# #     """Change hanger status endpoint
+@sample_router.delete(
+    "/sample_uuid",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
+)
+def delete_sample(
+    sample_uuid: str,
+    session: Session = Depends(get_session),
+):
+    """Change sample status endpoint
 
-# #     Returns:
-# #         tuple[dict,int]: A dict with delete message and a status_code
-# #     """
+    Returns:
+        tuple[dict,int]: A dict with delete message and a status_code
+    """
 
-# #     return HangerService.delete_hanger(hanger_uuid, session)
+    return SampleService.delete_sample(sample_uuid, session)
