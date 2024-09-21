@@ -1,9 +1,14 @@
-from fastapi import APIRouter, UploadFile, status
+from fastapi import APIRouter, Query, UploadFile, status
 from fastapi.params import Depends, Form
 from sqlalchemy.orm import Session
 
 from app.apis.sample.response import ListSampleRespose
-from app.apis.sample.schema import SampleCreateRequest, SampleUpdateRequest
+from app.apis.sample.schema import (
+    SampleCreateRequest,
+    SampleFilters,
+    SampleSortEnum,
+    SampleUpdateRequest,
+)
 from app.apis.sample.service import SampleService
 from app.apis.user.models import User
 from app.apis.user.schema import RoleEnum
@@ -52,11 +57,12 @@ def create_sample(
 
 
 @sample_router.patch(
-    "/",
+    "/sample_uuid",
     status_code=status.HTTP_202_ACCEPTED,
     dependencies=[Depends(has_role([RoleEnum.ADMIN]))],
 )
 def update_sample(
+    sample_uuid: str,
     name: str = Form(default=None),
     mill_reference_number: str | None = Form(default=None),
     construction: str | None = Form(default=None),
@@ -107,26 +113,22 @@ def get_sample_by_uuid(
     return SampleService.get_sample_by_uuid(sample_uuid, current_user, session)
 
 
-# @sample_router.get(
-#     "/", status_code=status.HTTP_200_OK, response_model=list[ListHangerRespose]
-# )
-# def list_hangers(
-#     filters: HangerFilters = Depends(),
-#     sort_by: list[HangerSortEnum] = Query(default=HangerSortEnum.desc_created_at),
-#     current_user: User = Depends(get_current_user),
-#     session: Session = Depends(get_session),
-# ):
-#     """List hangers endpoint
+@sample_router.get(
+    "/", status_code=status.HTTP_200_OK, response_model=list[ListSampleRespose]
+)
+def list_sample(
+    filters: SampleFilters = Depends(),
+    sort_by: list[SampleSortEnum] = Query(default=SampleSortEnum.desc_created_at),
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """List sample endpoint
 
-#     Returns:
-#         tuple[dict,int]: A dict with hanegr data and a status_code
-#     """
-#     filters = filters
-#     sort_by = sort_by
-#     current_user = current_user
-#     session = session
+    Returns:
+        tuple[dict,int]: A dict with sample data and a status_code
+    """
 
-#     return HangerService.list_hangers(filters, sort_by, current_user, session)
+    return SampleService.list_samples(filters, sort_by, current_user, session)
 
 
 # # @sample_router.get(

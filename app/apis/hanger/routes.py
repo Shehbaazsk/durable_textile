@@ -130,10 +130,6 @@ def list_hangers(
     Returns:
         tuple[dict,int]: A dict with hanger data and a status_code
     """
-    filters = filters
-    sort_by = sort_by
-    current_user = current_user
-    session = session
 
     return HangerService.list_hangers(filters, sort_by, current_user, session)
 
